@@ -1,0 +1,24 @@
+# Python / Django
+venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+# Django media/static (depende tu proyecto)
+media/
+staticfiles/
+
+# Frontend
+node_modules/
+dist/
+build/
+.vite/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
