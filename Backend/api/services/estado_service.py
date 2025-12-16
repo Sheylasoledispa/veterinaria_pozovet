@@ -27,3 +27,4 @@ def actualizar_estado(estado: Estado, data: dict) -> Estado:
 
 def eliminar_estado(estado: Estado) -> None:
     estado.delete()
+
