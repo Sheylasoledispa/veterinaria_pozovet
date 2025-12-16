@@ -1,7 +1,7 @@
 from django.urls import path
 from .controllers import estado_controller, rol_controller, usuario_controller, auth_controller,  mascota_controller
 from .controllers.usuario_controller import usuarios_por_tipo, cambiar_rol
-
+from api.controllers.usuario_controller import historial_global_usuarios
 
 urlpatterns = [
 
@@ -14,6 +14,8 @@ urlpatterns = [
     path("usuarios/<int:pk>/", usuario_controller.usuarios_detail, name="usuarios_detail"),
     path("usuarios/tipo/<str:tipo>/", usuarios_por_tipo),
     path("usuarios/<int:id_usuario>/cambiar-rol/", cambiar_rol),
+    path("usuarios/historial/", historial_global_usuarios, name="historial-global-usuarios"),
+
 
     # ESTADO
     path("estados/", estado_controller.estados_list_create, name="estados_list_create"),
@@ -26,5 +28,4 @@ urlpatterns = [
   # AUTH
     path("login/", auth_controller.login, name="login"),
     path("register/", auth_controller.register, name="register"),
-    
 ]

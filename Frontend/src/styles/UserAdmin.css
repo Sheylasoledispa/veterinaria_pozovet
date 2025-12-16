@@ -262,3 +262,167 @@
     flex-wrap: wrap;
   }
 }
+
+/* --- Modal de detalle de usuario --- */
+
+.ua-user-main-clickable {
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.ua-user-main-clickable:hover {
+  background: rgba(120, 81, 169, 0.04); /* tono suave */
+  transform: translateY(-1px);
+}
+
+/* Fondo oscuro */
+.ua-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* Tarjeta */
+.ua-modal {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  padding: 1.75rem 1.75rem 1.25rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.35);
+  position: relative;
+  animation: ua-modal-in 0.18s ease-out;
+}
+
+/* Botón cerrar */
+.ua-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.ua-modal-close:hover {
+  color: #0f172a;
+}
+
+/* Header del modal */
+.ua-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.ua-modal-avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.1rem;
+}
+
+.ua-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ua-modal-subtitle {
+  font-size: 0.9rem;
+  color: #6b21a8; /* moradito admin pozovet vibes */
+  margin: 0.15rem 0 0;
+}
+
+/* Cuerpo del modal */
+.ua-modal-body {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ua-modal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.ua-modal-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ua-modal-value {
+  color: #0f172a;
+  text-align: right;
+}
+
+/* Footer */
+.ua-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Animación */
+@keyframes ua-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ua-history-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ua-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ua-history-item {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: #f5f5f7;
+}
+
+.ua-history-date {
+  font-weight: 600;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.ua-history-main {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.ua-history-detail {
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.ua-history-meta {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}

@@ -10,6 +10,7 @@ from .models import (
     Producto,
     Compra,
     Detalle_compra,
+    HistorialUsuario,   
 )
 
 
@@ -29,8 +30,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
     # Contraseña opcional y no se muestra en las respuestas
     contrasena = serializers.CharField(
         write_only=True,
-        required=False,      # ← contraseña ya no es obligatoria
-        allow_blank=True     # ← si viene "", no da error
+        required=False,      
+        allow_blank=True     
     )
 
     class Meta:
@@ -42,7 +43,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
         contrasena = validated_data.pop("contrasena", None)
 
         if contrasena:
-            instance.contrasena = contrasena  # (sin hash, porque tu BD la guarda normal)
+            # (sin hash, porque tu BD la guarda normal)
+            instance.contrasena = contrasena
 
         return super().update(instance, validated_data)
 
@@ -87,3 +89,31 @@ class DetalleCompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Detalle_compra
         fields = "__all__"
+
+
+# SERIALIZER PARA EL HISTORIAL DE USUARIOS
+class HistorialUsuarioSerializer(serializers.ModelSerializer):
+    # Campos calculados para mostrar nombres bonitos en vez de solo IDs
+    usuario_nombre = serializers.SerializerMethodField()
+    realizado_por_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HistorialUsuario
+        fields = [
+            "id_historial",
+            "fecha",
+            "tipo",
+            "detalle",
+            "usuario_nombre",
+            "realizado_por_nombre",
+        ]
+
+    def get_usuario_nombre(self, obj):
+        # Usuario al que se le hizo el cambio
+        return f"{obj.usuario.nombre} {obj.usuario.apellido}"
+
+    def get_realizado_por_nombre(self, obj):
+        # Usuario que realizó el cambio (puede ser None)
+        if obj.realizado_por:
+            return f"{obj.realizado_por.nombre} {obj.realizado_por.apellido}"
+        return None

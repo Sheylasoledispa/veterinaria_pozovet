@@ -63,7 +63,7 @@ class Usuario(models.Model):
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
 
-  # 👇 AGREGA ESTO
+    # 👇 Esto sigue perteneciendo a Usuario
     @property
     def is_authenticated(self):
         """
@@ -71,6 +71,42 @@ class Usuario(models.Model):
         para IsAuthenticated.
         """
         return True
+
+
+class HistorialUsuario(models.Model):
+    id_historial = models.AutoField(primary_key=True)
+
+    # Usuario al que se le hicieron los cambios
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="historial"
+    )
+
+    # Quién hizo el cambio (puede ser admin u otro usuario)
+    realizado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="acciones_realizadas"
+    )
+
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    # Algo sencillo para clasificar el tipo de cambio
+    tipo = models.CharField(max_length=50)  # ej: "actualizacion_datos", "cambio_rol"
+
+    # Aquí guardamos el texto: "cambió el correo de X a Y"
+    detalle = models.TextField()
+
+    class Meta:
+        db_table = "HistorialUsuario"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"{self.usuario.nombre} - {self.tipo} - {self.fecha}"
+
 
 class Mascota(models.Model):
     id_mascota = models.AutoField(primary_key=True)
