@@ -15,23 +15,35 @@ def obtener_usuario_por_id(id_usuario: int) -> Optional[Usuario]:
 
 
 def crear_usuario(data: dict) -> Usuario:
-    # Si viene contraseña, la encriptamos
+
+    data = dict(data)
+
+    # Manejo de contraseña
     contrasena = data.get("contrasena")
     if contrasena:
         data["contrasena"] = make_password(contrasena)
 
+    # Si viene info de auditoría desde el controller (admin), la respetamos
+    creador_id = data.get("id_usuario_creacion")
+    if creador_id and not data.get("id_usuario_actualizacion"):
+        data["id_usuario_actualizacion"] = creador_id
+
+    # Creamos el usuario
     usuario = Usuario.objects.create(**data)
+
+    # Si NO vino id_usuario_creacion, asumimos que el usuario se creó a sí mismo
+    if not creador_id:
+        usuario.id_usuario_creacion = usuario.id_usuario
+        # Si tampoco tiene actualizador todavía, usamos el mismo
+        if not usuario.id_usuario_actualizacion:
+            usuario.id_usuario_actualizacion = usuario.id_usuario
+        usuario.save()
+
     return usuario
 
 
-def actualizar_usuario(usuario: Usuario, data: dict) -> Usuario:
-    """
-    Actualiza un usuario:
-    - Si viene 'contrasena' → la encripta.
-    - Ignora campos que NO existen como atributo del modelo.
-    """
 
-    # Clonamos el dict por seguridad
+def actualizar_usuario(usuario: Usuario, data: dict) -> Usuario:
     data = dict(data)
 
     # Manejo de contraseña
@@ -39,11 +51,10 @@ def actualizar_usuario(usuario: Usuario, data: dict) -> Usuario:
     if contrasena:
         usuario.contrasena = make_password(contrasena)
 
-    # Solo actualizamos campos válidos del modelo
+    # Otros campos (incluyendo auditoría si vienen)
     for campo, valor in data.items():
         if hasattr(usuario, campo):
             setattr(usuario, campo, valor)
-        # Si el campo no existe, simplemente lo ignoramos
 
     usuario.save()
     return usuario

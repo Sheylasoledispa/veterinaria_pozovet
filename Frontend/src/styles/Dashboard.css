@@ -273,3 +273,118 @@
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==== Gestión de mascotas dentro de la tarjeta ==== */
+
+.dash-card-mascotas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dash-mascotas-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0.2rem;
+}
+
+.dash-mascota-pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+  color: #5b3f7a;
+  border: 1px solid rgba(155, 28, 143, 0.18);
+}
+
+.dash-mascota-mas {
+  font-size: 0.8rem;
+  color: #7a5b9e;
+}
+
+/* Botón dentro de la tarjeta */
+.dash-card-btn {
+  margin-top: 0.4rem;
+  align-self: flex-start;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #9b1c8f, #d81b60);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(155, 28, 143, 0.45);
+  transition: 0.15s ease;
+}
+
+.dash-card-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* Formulario compacto dentro de la tarjeta */
+.dash-mascota-form {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dash-mascota-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dash-mascota-form-row input {
+  flex: 1 1 130px;
+  border-radius: 999px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.dash-mascota-form-row input:focus {
+  border-color: #d81b60;
+  box-shadow: 0 0 0 1px rgba(216, 27, 96, 0.2);
+}
+
+.dash-mascota-error {
+  font-size: 0.78rem;
+  color: #ff4d4f;
+}
+
+.dash-mascota-submit {
+  align-self: flex-end;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #ffffff;
+  color: #9b1c8f;
+  border: 1px solid rgba(155, 28, 143, 0.4);
+  transition: 0.15s ease;
+}
+
+.dash-mascota-submit:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #d81b60;
+}
