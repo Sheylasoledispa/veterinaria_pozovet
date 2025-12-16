@@ -1,0 +1,264 @@
+/* =========================================================
+   🎨 Estilos unificados con la paleta PozoVet
+   ========================================================= */
+:root {
+  --pozovet-purple: #9b1c8f;
+  --pozovet-magenta: #d81b60;
+  --pozovet-teal: #00bcd4;
+  --pozovet-dark: #3a213d;
+  --pozovet-bg: #f8f3fb;
+}
+
+/* página completa */
+.ua-page-wrapper {
+  min-height: calc(100vh - 160px);
+  background: var(--pozovet-bg);
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+/* tarjeta principal */
+.ua-card {
+  width: 100%;
+  max-width: 1100px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(155, 28, 143, 0.15);
+  padding: 24px 24px 28px;
+}
+
+/* header */
+.ua-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ua-title {
+  font-size: 1.6rem;
+  margin: 0;
+  color: var(--pozovet-dark);
+}
+
+.ua-subtitle {
+  margin: 4px 0 0;
+  color: #7d618a;
+  font-size: 0.95rem;
+}
+
+/* botones toggle */
+.ua-toggle-group {
+  display: flex;
+  gap: 8px;
+  background: #f7e8f7;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.ua-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--pozovet-purple);
+  transition: 0.2s ease;
+}
+
+.ua-toggle-btn.active {
+  background: var(--pozovet-purple);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(155, 28, 143, 0.35);
+}
+
+/* resumen */
+.ua-summary {
+  margin-bottom: 10px;
+}
+
+.ua-pill {
+  display: inline-block;
+  background: #f7e8f7;
+  color: var(--pozovet-purple);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* mensajes */
+.ua-error {
+  color: #ff4d4f;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.ua-loading {
+  font-size: 0.9rem;
+  color: #6d5477;
+  margin-bottom: 8px;
+}
+
+.ua-empty {
+  margin-top: 12px;
+  color: #8b88aa;
+  font-size: 0.9rem;
+}
+
+/* lista */
+.ua-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* tarjeta usuario */
+.ua-user-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  background: #fdf7fd;
+}
+
+.ua-user-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* avatar */
+.ua-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--pozovet-purple);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.ua-user-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--pozovet-dark);
+}
+
+.ua-user-email {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #7a6c84;
+}
+
+.ua-user-small {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: #9a8dae;
+}
+
+/* meta derecha */
+.ua-user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* chip rol */
+.ua-role-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.ua-role-chip.admin {
+  background: rgba(155, 28, 143, 0.12);
+  color: var(--pozovet-purple);
+}
+
+.ua-role-chip.normal {
+  background: rgba(0, 188, 212, 0.12);
+  color: var(--pozovet-teal);
+}
+
+/* botones acción */
+.ua-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ua-btn-primary,
+.ua-btn-outline,
+.ua-btn-danger {
+  border-radius: 999px;
+  border: none;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* hacer admin */
+.ua-btn-primary {
+  background: linear-gradient(135deg, var(--pozovet-purple), var(--pozovet-magenta));
+  color: white;
+  box-shadow: 0 4px 12px rgba(155, 28, 143, 0.35);
+}
+
+.ua-btn-primary:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* quitar admin */
+.ua-btn-outline {
+  background: transparent;
+  color: var(--pozovet-purple);
+  border: 1px solid rgba(155, 28, 143, 0.35);
+}
+
+.ua-btn-outline:hover {
+  background: rgba(155, 28, 143, 0.06);
+}
+
+/* eliminar */
+.ua-btn-danger {
+  background: #ff5c5c;
+  color: white;
+}
+
+.ua-btn-danger:hover {
+  background: #ff4242;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .ua-card {
+    padding: 18px 16px 22px;
+  }
+
+  .ua-user-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ua-user-meta {
+    align-items: flex-start;
+  }
+
+  .ua-actions {
+    flex-wrap: wrap;
+  }
+}

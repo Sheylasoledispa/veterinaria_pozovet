@@ -1,0 +1,28 @@
+/* src/components/Footer.css */
+.footer-wrapper {
+  margin-top: 1rem;
+  background: #ffffff;
+  border-top: 1px solid rgba(183, 155, 204, 0.7); /* línea igual que navbar */
+}
+
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.8rem 1rem 0.9rem;
+  text-align: center;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.footer-text {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #5a3a61;
+}
+
+.footer-subtext {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: #7c6487;
+}

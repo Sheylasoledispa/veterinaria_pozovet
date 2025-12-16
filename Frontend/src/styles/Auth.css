@@ -1,0 +1,219 @@
+/* src/styles/Auth.css */
+
+/* Colores sacados del logo */
+:root {
+  --pozovet-purple: #9b1c8f;
+  --pozovet-magenta: #d81b60;
+  --pozovet-teal: #00bcd4;
+  --pozovet-dark: #382338;
+  --pozovet-bg: #f8f3fb;
+}
+
+/* Fondo general de la página de auth */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(circle at top, #ffffff 0, var(--pozovet-bg) 60%, #f0e0f7 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Tarjeta central */
+.auth-card {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 2.6rem 2.2rem 2rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Franja superior de color */
+.auth-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 8px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--pozovet-purple),
+    var(--pozovet-magenta),
+    var(--pozovet-teal)
+  );
+}
+
+/* Encabezado */
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.8rem;
+}
+
+.auth-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 999px;
+  object-fit: cover;
+  margin-bottom: 0.6rem;
+  box-shadow: 0 0 0 4px #ffffff;
+}
+
+.auth-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--pozovet-purple);
+  margin: 0;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: #6a5a6e;
+  margin-top: 0.2rem;
+}
+
+/* Formulario */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* Cada grupo de campo */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.auth-label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--pozovet-dark);
+}
+
+.auth-input {
+  border-radius: 10px;
+  border: 1px solid #d3c3e2;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  background: #faf7ff;
+}
+
+.auth-input:focus {
+  border-color: var(--pozovet-magenta);
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.18);
+  background: #ffffff;
+}
+
+/* Botón principal */
+.auth-button {
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  border: none;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--pozovet-purple),
+    var(--pozovet-magenta)
+  );
+  box-shadow: 0 10px 20px rgba(155, 28, 143, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.auth-button:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(155, 28, 143, 0.4);
+}
+
+.auth-button:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(155, 28, 143, 0.3);
+}
+
+/* Mensajes */
+.auth-error {
+  margin-top: 0.4rem;
+  color: #e53935;
+  font-size: 0.85rem;
+}
+
+.auth-success {
+  margin-top: 0.4rem;
+  color: #2e7d32;
+  font-size: 0.85rem;
+}
+
+/* Pie con link */
+.auth-footer {
+  margin-top: 1.3rem;
+  text-align: center;
+  font-size: 0.86rem;
+  color: #6d5a76;
+}
+
+.auth-link {
+  color: var(--pozovet-magenta);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 2.1rem 1.4rem 1.6rem;
+  }
+
+  .auth-title {
+    font-size: 1.4rem;
+  }
+
+  .auth-logo {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+.input-error {
+  border: 1px solid #e63946 !important;
+}
+
+.auth-error {
+  color: #e63946;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.input-error {
+  border: 1px solid #e63946 !important;
+}
+
+.auth-error {
+  color: #e63946;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.auth-success {
+  color: #2a9d8f;
+  font-size: 14px;
+  margin-top: 8px;
+}

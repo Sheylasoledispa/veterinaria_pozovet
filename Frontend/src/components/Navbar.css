@@ -1,0 +1,167 @@
+/* src/components/Navbar.css */
+:root {
+  --pozovet-purple: #9b1c8f;
+  --pozovet-magenta: #d81b60;
+  --pozovet-teal: #00bcd4;
+  --pozovet-dark: #3a213d;
+  --pozovet-bg: #f8f3fb;
+}
+.nav-wrapper,
+.nav-container,
+.nav-logo-group,
+.nav-text,
+.nav-title,
+.nav-subtitle,
+.nav-links,
+.nav-link,
+.nav-btn {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+.nav-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(183, 155, 204, 0.7);
+}
+
+.nav-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.2rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo-group {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* --- LOGO: sin marco ni fondo --- */
+.nav-logo {
+  width: 70px;
+  height: 70px;
+
+  /* Quitar cualquier forma/borde/sombra */
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  /* Ajustes para que la imagen ocupe todo el contenedor sin distorsión */
+  display: block;
+  object-fit: contain; /* o `cover` si prefieres recortar */
+}
+
+/* Asegurar que el <img> no tenga outline al ser foco */
+.nav-logo:focus,
+.nav-logo img:focus,
+.nav-logo:active,
+.nav-logo img:active {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Si estás usando una etiqueta <img class="nav-logo" />, aplica también: */
+.nav-logo[src] {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* --- resto del CSS --- */
+.nav-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-title {
+  font-size: 1.35rem;  /* título más grande */
+  font-weight: 700;
+  color: var(--pozovet-purple);
+}
+
+.nav-subtitle {
+  font-size: 0.9rem;    /* subtítulo más grande */
+  color: #6c5872;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  font-size: 0.9rem;
+  color: #5f4b70;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--pozovet-magenta);
+}
+
+.nav-btn {
+  font-size: 0.9rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.nav-btn-outline {
+  border-color: var(--pozovet-purple);
+  color: var(--pozovet-purple);
+  background: transparent;
+}
+
+.nav-btn-outline:hover {
+  background: rgba(155, 28, 143, 0.06);
+}
+
+.nav-btn-filled {
+  background: linear-gradient(
+    135deg,
+    var(--pozovet-purple),
+    var(--pozovet-magenta)
+  );
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(155, 28, 143, 0.4);
+}
+
+.nav-btn-filled:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(155, 28, 143, 0.45);
+}
+
+.nav-btn-logout {
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .nav-container {
+    padding-inline: 0.8rem;
+  }
+
+  .nav-subtitle {
+    display: none;
+  }
+
+  .nav-links {
+    gap: 0.35rem;
+  }
+
+  .nav-btn {
+    padding-inline: 0.7rem;
+  }
+}
