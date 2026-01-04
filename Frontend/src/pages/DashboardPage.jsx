@@ -15,13 +15,13 @@ const DashboardPage = () => {
   const [savingTurno, setSavingTurno] = useState(false);
 
   const [nuevoTurno, setNuevoTurno] = useState({
-  id_mascota: "",
-  fecha_turno: "",
-  hora_turno: "",
-});
+    id_mascota: "",
+    fecha_turno: "",
+    hora_turno: "",
+  });
 
-    const [showForm, setShowForm] = useState(false);
-    const [nuevaMascota, setNuevaMascota] = useState({
+  const [showForm, setShowForm] = useState(false);
+  const [nuevaMascota, setNuevaMascota] = useState({
     nombre_mascota: "",
     especie: "",
     raza_mascota: "",
@@ -30,31 +30,31 @@ const DashboardPage = () => {
   });
   const [errorMascota, setErrorMascota] = useState("");
 
-  useEffect(() => {
-    const fetchMascotas = async () => {
-      try {
-        const { data } = await api.get("/mascotas/");
-        setMascotas(data);
-      } catch (error) {
-        console.error("Error al obtener mascotas", error);
-      }
-    };
-
-    fetchMascotas();
-
-  }, []);
-
+  // ✅ Fetch Turnos (lo dejamos como función para reutilizar en guardarTurno)
   const fetchTurnos = async () => {
-  try {
-    const { data } = await api.get("/turnos/");
-    setTurnos(data);
-  } catch (error) {
-    console.error("Error al obtener turnos", error);
-  }
-};
+    try {
+      const { data } = await api.get("/turnos/");
+      setTurnos(data);
+    } catch (error) {
+      console.error("Error al obtener turnos", error);
+    }
+  };
 
-fetchTurnos();
+  // ✅ Fetch Mascotas (igual: función reutilizable)
+  const fetchMascotas = async () => {
+    try {
+      const { data } = await api.get("/mascotas/");
+      setMascotas(data);
+    } catch (error) {
+      console.error("Error al obtener mascotas", error);
+    }
+  };
 
+  // ✅ IMPORTANTE: SOLO una vez al montar
+  useEffect(() => {
+    fetchMascotas();
+    fetchTurnos();
+  }, []);
 
   const handleChangeMascota = (e) => {
     const { name, value } = e.target;
@@ -88,56 +88,54 @@ fetchTurnos();
   const mascotasResumen = mascotas.slice(0, 3);
 
   // 🔹 Abrir modal de agendar cita
-const abrirTurnoModal = () => {
-  setTurnoError("");
-  setNuevoTurno({
-    id_mascota: "",
-    fecha_turno: "",
-    hora_turno: "",
-  });
-  setIsTurnoModalOpen(true);
-};
-
-// 🔹 Cerrar modal
-const cerrarTurnoModal = () => {
-  setIsTurnoModalOpen(false);
-  setTurnoError("");
-};
-
-// 🔹 Manejar inputs del formulario
-const handleTurnoChange = (e) => {
-  const { name, value } = e.target;
-  setNuevoTurno((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
-
-// 🔹 Guardar cita (turno)
-const guardarTurno = async (e) => {
-  e.preventDefault();
-  setSavingTurno(true);
-  setTurnoError("");
-
-  try {
-    await api.post("/turnos/", {
-      ...nuevoTurno,
-      id_mascota: Number(nuevoTurno.id_mascota),
+  const abrirTurnoModal = () => {
+    setTurnoError("");
+    setNuevoTurno({
+      id_mascota: "",
+      fecha_turno: "",
+      hora_turno: "",
     });
+    setIsTurnoModalOpen(true);
+  };
 
-    cerrarTurnoModal();
+  // 🔹 Cerrar modal
+  const cerrarTurnoModal = () => {
+    setIsTurnoModalOpen(false);
+    setTurnoError("");
+  };
 
-    // refrescar lista de turnos
-    const { data } = await api.get("/turnos/");
-    setTurnos(data);
-  } catch (err) {
-    console.error(err);
-    setTurnoError("No se pudo agendar la cita.");
-  } finally {
-    setSavingTurno(false);
-  }
-};
+  // 🔹 Manejar inputs del formulario
+  const handleTurnoChange = (e) => {
+    const { name, value } = e.target;
+    setNuevoTurno((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
+  // 🔹 Guardar cita (turno)
+  const guardarTurno = async (e) => {
+    e.preventDefault();
+    setSavingTurno(true);
+    setTurnoError("");
+
+    try {
+      await api.post("/turnos/", {
+        ...nuevoTurno,
+        id_mascota: Number(nuevoTurno.id_mascota),
+      });
+
+      cerrarTurnoModal();
+
+      // ✅ refrescar lista de turnos (ya no hace loop)
+      fetchTurnos();
+    } catch (err) {
+      console.error(err);
+      setTurnoError("No se pudo agendar la cita.");
+    } finally {
+      setSavingTurno(false);
+    }
+  };
 
   return (
     <div className="dash-root">
@@ -147,9 +145,7 @@ const guardarTurno = async (e) => {
         <section className="dash-container">
           <header className="dash-header">
             <div>
-              <h1 className="dash-title">
-                Hola, {usuario?.nombre || "usuario"} 👋
-              </h1>
+              <h1 className="dash-title">Hola, {usuario?.nombre || "usuario"} 👋</h1>
               <p className="dash-subtitle">
                 Este es tu panel en PozoVet. Aquí puedes ver un resumen de tus
                 mascotas atendidas.
@@ -158,32 +154,29 @@ const guardarTurno = async (e) => {
           </header>
 
           <section className="dash-cards">
-            {/* Tarjeta de resumen de citas (ahora usa cantidad de mascotas como ejemplo) */}
+            {/* Tarjeta de resumen */}
             <div className="dash-card">
               <span className="dash-card-label">Mascotas registradas</span>
               <span className="dash-card-value">{mascotas.length}</span>
               <span className="dash-card-hint">
-                Revisa el listado completo y agrega nuevas mascotas desde tu
-                panel.
+                Revisa el listado completo y agrega nuevas mascotas desde tu panel.
               </span>
 
-              
-              <button type="button" className="dash-card-btn" onClick={abrirTurnoModal}>
-                 Agendar cita
-             </button>
+              <button
+                type="button"
+                className="dash-card-btn"
+                onClick={abrirTurnoModal}
+              >
+                Agendar cita
+              </button>
             </div>
-            
-
 
             {/* Tarjeta transformada: gestión de mascotas */}
             <div className="dash-card dash-card-accent dash-card-mascotas">
               <span className="dash-card-label">Tus mascotas</span>
 
               {mascotas.length === 0 ? (
-                <span className="dash-card-hint">
-                  Aún no has registrado ninguna mascota.
-                </span>
-                
+                <span className="dash-card-hint">Aún no has registrado ninguna mascota.</span>
               ) : (
                 <>
                   <div className="dash-mascotas-lista">
@@ -204,8 +197,6 @@ const guardarTurno = async (e) => {
                 </>
               )}
 
-
-
               <button
                 type="button"
                 className="dash-card-btn"
@@ -213,13 +204,9 @@ const guardarTurno = async (e) => {
               >
                 {showForm ? "Cerrar formulario" : "Registrar nueva mascota"}
               </button>
-              
 
               {showForm && (
-                <form
-                  className="dash-mascota-form"
-                  onSubmit={handleRegistrarMascota}
-                >
+                <form className="dash-mascota-form" onSubmit={handleRegistrarMascota}>
                   <div className="dash-mascota-form-row">
                     <input
                       type="text"
@@ -264,9 +251,7 @@ const guardarTurno = async (e) => {
                     />
                   </div>
 
-                  {errorMascota && (
-                    <p className="dash-mascota-error">{errorMascota}</p>
-                  )}
+                  {errorMascota && <p className="dash-mascota-error">{errorMascota}</p>}
 
                   <button type="submit" className="dash-mascota-submit">
                     Guardar mascota
@@ -309,67 +294,66 @@ const guardarTurno = async (e) => {
           </section>
         </section>
       </main>
+
       {isTurnoModalOpen && (
-  <div className="dash-modal-backdrop" onClick={cerrarTurnoModal}>
-    <div className="dash-modal" onClick={(e) => e.stopPropagation()}>
-      <h3 className="dash-modal-title">Agendar cita</h3>
+        <div className="dash-modal-backdrop" onClick={cerrarTurnoModal}>
+          <div className="dash-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="dash-modal-title">Agendar cita</h3>
 
-      <form className="dash-form" onSubmit={guardarTurno}>
-        <select
-          name="id_mascota"
-          value={nuevoTurno.id_mascota}
-          onChange={handleTurnoChange}
-          required
-        >
-          <option value="">Selecciona una mascota</option>
-          {mascotas.map((m) => (
-            <option key={m.id_mascota} value={m.id_mascota}>
-              {m.nombre_mascota} ({m.especie})
-            </option>
-          ))}
-        </select>
+            <form className="dash-form" onSubmit={guardarTurno}>
+              <select
+                name="id_mascota"
+                value={nuevoTurno.id_mascota}
+                onChange={handleTurnoChange}
+                required
+              >
+                <option value="">Selecciona una mascota</option>
+                {mascotas.map((m) => (
+                  <option key={m.id_mascota} value={m.id_mascota}>
+                    {m.nombre_mascota} ({m.especie})
+                  </option>
+                ))}
+              </select>
 
-        <div className="dash-form-row">
-          <input
-            type="date"
-            name="fecha_turno"
-            value={nuevoTurno.fecha_turno}
-            onChange={handleTurnoChange}
-            required
-          />
-          <input
-            type="time"
-            name="hora_turno"
-            value={nuevoTurno.hora_turno}
-            onChange={handleTurnoChange}
-            required
-          />
+              <div className="dash-form-row">
+                <input
+                  type="date"
+                  name="fecha_turno"
+                  value={nuevoTurno.fecha_turno}
+                  onChange={handleTurnoChange}
+                  required
+                />
+                <input
+                  type="time"
+                  name="hora_turno"
+                  value={nuevoTurno.hora_turno}
+                  onChange={handleTurnoChange}
+                  required
+                />
+              </div>
+
+              {turnoError && <p className="dash-error">{turnoError}</p>}
+
+              <div className="dash-form-actions">
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-outline"
+                  onClick={cerrarTurnoModal}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="dash-btn" disabled={savingTurno}>
+                  {savingTurno ? "Guardando..." : "Guardar cita"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        {turnoError && <p className="dash-error">{turnoError}</p>}
-
-        <div className="dash-form-actions">
-          <button
-            type="button"
-            className="dash-btn dash-btn-outline"
-            onClick={cerrarTurnoModal}
-          >
-            Cancelar
-          </button>
-          <button type="submit" className="dash-btn" disabled={savingTurno}>
-            {savingTurno ? "Guardando..." : "Guardar cita"}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
+      )}
 
       <Footer />
     </div>
   );
-  
 };
 
 export default DashboardPage;
