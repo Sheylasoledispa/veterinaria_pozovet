@@ -465,3 +465,50 @@
   box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.12);
 }
 
+.ua-mascotas-rows {
+  margin-top: 8px;
+}
+
+.ua-mascota-block {
+  padding-top: 6px;
+}
+
+
+/* ✅ Evita que el modal se agrande demasiado */
+.ua-modal {
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+/* ✅ El cuerpo puede scrollear sin crecer el modal */
+.ua-modal-body-scroll {
+  overflow-y: auto;
+  max-height: calc(85vh - 180px); /* ajusta si tu header/footer es más grande */
+  padding-right: 6px;
+}
+
+/* ✅ Título mascotas: menos separación abajo */
+.ua-mascotas-title {
+  margin-bottom: 8px;
+}
+
+/* ✅ Scroll SOLO para la lista de mascotas (si hay muchas) */
+.ua-mascotas-scroll {
+  max-height: 260px;  /* aquí decides hasta dónde crece antes de scrollear */
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-top: 0;      /* para que la primera mascota quede pegada al título */
+}
+
+/* ✅ Tarjeta de cada mascota + separación entre mascotas */
+.ua-mascota-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 12px;
+}
+
+.ua-mascota-card:last-child {
+  margin-bottom: 0;
+}

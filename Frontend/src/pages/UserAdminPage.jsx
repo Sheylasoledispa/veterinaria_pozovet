@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import "../styles/UserAdmin.css";
 
 const UserAdminPage = () => {
-  const [tipo, setTipo] = useState("clientes"); 
+  const [tipo, setTipo] = useState("clientes");
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -14,17 +14,17 @@ const UserAdminPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 👇 NUEVO: estado para historial global
+  // NUEVO: estado para historial global
   const [isGlobalHistoryOpen, setIsGlobalHistoryOpen] = useState(false);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
-  // ✅ NUEVO: Modal para registrar mascota a un usuario (admin)
+  // ✅ Modal para registrar mascota a un usuario (admin)
   const [isMascotaModalOpen, setIsMascotaModalOpen] = useState(false);
   const [mascotaOwner, setMascotaOwner] = useState(null);
 
-  // ✅ NUEVO: formulario (mismo estilo que dashboard)
+  // ✅ formulario mascota (mismo estilo que dashboard)
   const [nuevaMascota, setNuevaMascota] = useState({
     nombre_mascota: "",
     especie: "",
@@ -34,6 +34,11 @@ const UserAdminPage = () => {
   });
   const [mascotaError, setMascotaError] = useState("");
   const [savingMascota, setSavingMascota] = useState(false);
+
+  // ✅ NUEVO: mascotas del usuario en el modal de detalle
+  const [userMascotas, setUserMascotas] = useState([]);
+  const [loadingMascotas, setLoadingMascotas] = useState(false);
+  const [mascotasError, setMascotasError] = useState("");
 
   const cargarUsuarios = async (tipoLista) => {
     try {
@@ -74,18 +79,45 @@ const UserAdminPage = () => {
     }
   };
 
+  // ✅ NUEVO: cargar mascotas del usuario seleccionado
+  const cargarMascotasDeUsuario = async (idUsuario) => {
+    setLoadingMascotas(true);
+    setMascotasError("");
+    setUserMascotas([]);
+
+    try {
+      // Endpoint admin:
+      // GET /mascotas/por-usuario/<id>/
+      const res = await api.get(`/mascotas/por-usuario/${idUsuario}/`);
+      setUserMascotas(res.data);
+    } catch (err) {
+      console.error(err);
+      setMascotasError("No se pudieron cargar las mascotas del usuario.");
+    } finally {
+      setLoadingMascotas(false);
+    }
+  };
+
   // Abrir y cerrar modal de detalle
   const abrirModalUsuario = (usuario) => {
     setSelectedUser(usuario);
     setIsModalOpen(true);
+
+    // ✅ NUEVO: cargar mascotas del usuario al abrir modal
+    cargarMascotasDeUsuario(usuario.id_usuario);
   };
 
   const cerrarModalUsuario = () => {
     setIsModalOpen(false);
     setSelectedUser(null);
+
+    // limpiar estado mascotas
+    setUserMascotas([]);
+    setMascotasError("");
+    setLoadingMascotas(false);
   };
 
-  // NUEVO: abrir / cerrar historial global (llamando al backend)
+  // abrir / cerrar historial global (llamando al backend)
   const abrirHistorialGlobal = async () => {
     setIsGlobalHistoryOpen(true);
     setLoadingHistory(true);
@@ -109,7 +141,7 @@ const UserAdminPage = () => {
     setHistoryError("");
   };
 
-  // ✅ NUEVO: Abrir/cerrar modal de registrar mascota (admin)
+  // Abrir/cerrar modal de registrar mascota (admin)
   const abrirMascotaModal = (usuario) => {
     setMascotaOwner(usuario);
     setMascotaError("");
@@ -130,13 +162,13 @@ const UserAdminPage = () => {
     setSavingMascota(false);
   };
 
-  // ✅ NUEVO: manejo de inputs del formulario mascota
+  // manejo de inputs del formulario mascota
   const handleMascotaChange = (e) => {
     const { name, value } = e.target;
     setNuevaMascota((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ NUEVO: guardar mascota para el usuario seleccionado
+  // guardar mascota para el usuario seleccionado
   const guardarMascotaParaUsuario = async (e) => {
     e.preventDefault();
     if (!mascotaOwner?.id_usuario) return;
@@ -145,15 +177,29 @@ const UserAdminPage = () => {
     setMascotaError("");
 
     try {
-      // 🔥 Endpoint admin (backend) — lo creamos abajo:
       // POST /mascotas/admin-create/
       await api.post("/mascotas/admin-create/", {
         ...nuevaMascota,
         id_usuario: mascotaOwner.id_usuario, // dueño
       });
 
+      // ✅ NUEVO: si el modal de detalle está abierto y es el mismo usuario,
+      // refrescamos la lista de mascotas para que se vea de una.
+      if (isModalOpen && selectedUser?.id_usuario === mascotaOwner.id_usuario) {
+        await cargarMascotasDeUsuario(mascotaOwner.id_usuario);
+      }
+
+      // ✅ NUEVO: refrescar historial si está abierto
+      if (isGlobalHistoryOpen) {
+        try {
+          const res = await api.get("/usuarios/historial/");
+          setHistory(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
       cerrarMascotaModal();
-      // Recargar la lista por si quieres reflejar cambios (no rompe nada)
       cargarUsuarios(tipo);
     } catch (err) {
       console.error(err);
@@ -208,7 +254,6 @@ const UserAdminPage = () => {
               {usuarios.length !== 1 && "s"}
             </span>
 
-            {/* NUEVO: botón para abrir historial general */}
             <button
               type="button"
               className="ua-btn-outline ua-summary-btn"
@@ -230,7 +275,6 @@ const UserAdminPage = () => {
           <div className="ua-list">
             {usuarios.map((u) => (
               <div key={u.id_usuario} className="ua-user-card">
-                {/* SOLO la parte principal es clickable para abrir el modal */}
                 <div
                   className="ua-user-main ua-user-main-clickable"
                   onClick={() => abrirModalUsuario(u)}
@@ -278,7 +322,6 @@ const UserAdminPage = () => {
                       </button>
                     )}
 
-                    {/* ✅ NUEVO: botón para registrar mascota (NO quita nada) */}
                     <button
                       type="button"
                       className="ua-btn-outline ua-btn-mascota"
@@ -305,10 +348,7 @@ const UserAdminPage = () => {
       {/* MODAL DE DETALLE DE USUARIO */}
       {isModalOpen && selectedUser && (
         <div className="ua-modal-backdrop" onClick={cerrarModalUsuario}>
-          <div
-            className="ua-modal"
-            onClick={(e) => e.stopPropagation()} // para no cerrar al hacer click dentro
-          >
+          <div className="ua-modal" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className="ua-modal-close"
@@ -335,7 +375,7 @@ const UserAdminPage = () => {
               </div>
             </div>
 
-            <div className="ua-modal-body">
+            <div className="ua-modal-body ua-modal-body-scroll">
               <div className="ua-modal-row">
                 <span className="ua-modal-label">Correo:</span>
                 <span className="ua-modal-value">
@@ -372,10 +412,72 @@ const UserAdminPage = () => {
               </div>
               <div className="ua-modal-row">
                 <span className="ua-modal-label">ID usuario:</span>
-                <span className="ua-modal-value">
-                  {selectedUser.id_usuario}
-                </span>
+                <span className="ua-modal-value">{selectedUser.id_usuario}</span>
               </div>
+
+              {/* ✅ CAMBIO FINAL: mascotas con separación + pegadas al título + scroll interno */}
+              <div className="ua-modal-divider" />
+              <h3 className="ua-modal-section-title ua-mascotas-title">
+                Mascotas registradas
+              </h3>
+
+              {loadingMascotas && (
+                <p className="ua-loading">Cargando mascotas...</p>
+              )}
+              {mascotasError && <p className="ua-error">{mascotasError}</p>}
+
+              {!loadingMascotas &&
+                !mascotasError &&
+                userMascotas.length === 0 && (
+                  <p className="ua-empty">
+                    Este usuario aún no tiene mascotas registradas.
+                  </p>
+                )}
+
+              {!loadingMascotas && !mascotasError && userMascotas.length > 0 && (
+                <div className="ua-mascotas-scroll">
+                  {userMascotas.map((m, idx) => (
+                    <div key={m.id_mascota} className="ua-mascota-card">
+                      <div className="ua-modal-row">
+                        <span className="ua-modal-label">
+                          Mascota #{idx + 1}:
+                        </span>
+                        <span className="ua-modal-value">
+                          {m.nombre_mascota || "—"}
+                        </span>
+                      </div>
+
+                      <div className="ua-modal-row">
+                        <span className="ua-modal-label">Especie:</span>
+                        <span className="ua-modal-value">{m.especie || "—"}</span>
+                      </div>
+
+                      <div className="ua-modal-row">
+                        <span className="ua-modal-label">Raza:</span>
+                        <span className="ua-modal-value">
+                          {m.raza_mascota || "—"}
+                        </span>
+                      </div>
+
+                      <div className="ua-modal-row">
+                        <span className="ua-modal-label">Sexo:</span>
+                        <span className="ua-modal-value">{m.sexo || "—"}</span>
+                      </div>
+
+                      <div className="ua-modal-row">
+                        <span className="ua-modal-label">Edad:</span>
+                        <span className="ua-modal-value">
+                          {m.edad_mascota !== null &&
+                          m.edad_mascota !== undefined &&
+                          m.edad_mascota !== ""
+                            ? `${m.edad_mascota} años`
+                            : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="ua-modal-footer">
@@ -391,10 +493,13 @@ const UserAdminPage = () => {
         </div>
       )}
 
-      {/* ✅ NUEVO: MODAL REGISTRAR MASCOTA PARA USUARIO */}
+      {/* MODAL REGISTRAR MASCOTA PARA USUARIO */}
       {isMascotaModalOpen && mascotaOwner && (
         <div className="ua-modal-backdrop" onClick={cerrarMascotaModal}>
-          <div className="ua-modal ua-modal-mascota" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="ua-modal ua-modal-mascota"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               className="ua-modal-close"
@@ -406,11 +511,18 @@ const UserAdminPage = () => {
             <div className="ua-modal-header">
               <h2 className="ua-modal-title">Registrar mascota</h2>
               <p className="ua-modal-subtitle">
-                Dueño: <strong>{mascotaOwner.nombre} {mascotaOwner.apellido}</strong> · {mascotaOwner.correo}
+                Dueño:{" "}
+                <strong>
+                  {mascotaOwner.nombre} {mascotaOwner.apellido}
+                </strong>{" "}
+                · {mascotaOwner.correo}
               </p>
             </div>
 
-            <form className="ua-mascota-form" onSubmit={guardarMascotaParaUsuario}>
+            <form
+              className="ua-mascota-form"
+              onSubmit={guardarMascotaParaUsuario}
+            >
               <div className="ua-mascota-row">
                 <input
                   type="text"
@@ -458,10 +570,18 @@ const UserAdminPage = () => {
               {mascotaError && <p className="ua-error">{mascotaError}</p>}
 
               <div className="ua-modal-footer">
-                <button type="button" className="ua-btn-outline" onClick={cerrarMascotaModal}>
+                <button
+                  type="button"
+                  className="ua-btn-outline"
+                  onClick={cerrarMascotaModal}
+                >
                   Cancelar
                 </button>
-                <button type="submit" className="ua-btn-primary" disabled={savingMascota}>
+                <button
+                  type="submit"
+                  className="ua-btn-primary"
+                  disabled={savingMascota}
+                >
                   {savingMascota ? "Guardando..." : "Guardar mascota"}
                 </button>
               </div>
@@ -470,7 +590,7 @@ const UserAdminPage = () => {
         </div>
       )}
 
-      {/* NUEVO: MODAL DE HISTORIAL GLOBAL */}
+      {/* MODAL DE HISTORIAL GLOBAL */}
       {isGlobalHistoryOpen && (
         <div className="ua-modal-backdrop" onClick={cerrarHistorialGlobal}>
           <div
@@ -505,24 +625,18 @@ const UserAdminPage = () => {
               {!loadingHistory && history.length > 0 && (
                 <div className="ua-history-list">
                   {history.map((log) => (
-                    <div
-                      key={log.id_historial}
-                      className="ua-history-item"
-                    >
+                    <div key={log.id_historial} className="ua-history-item">
                       <p className="ua-history-date">
                         {new Date(log.fecha).toLocaleString()}
                       </p>
 
-                      <p className="ua-history-detail">
-                        {log.detalle}
-                      </p>
+                      <p className="ua-history-detail">{log.detalle}</p>
 
                       {log.realizado_por_nombre && (
                         <p className="ua-history-meta">
                           Realizado por: {log.realizado_por_nombre}
                         </p>
                       )}
-
                     </div>
                   ))}
                 </div>

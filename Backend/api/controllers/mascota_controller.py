@@ -5,7 +5,7 @@ from rest_framework import status
 
 from ..serializers import MascotaSerializer
 from ..services import mascota_service
-from ..models import Usuario 
+from ..models import Usuario, HistorialUsuario
 
 
 @api_view(["GET", "POST"])
@@ -34,6 +34,15 @@ def mascotas_list_create(request):
         serializer = MascotaSerializer(data=data)
         if serializer.is_valid():
             mascota = mascota_service.crear_mascota(serializer.validated_data)
+
+            # ✅ HISTORIAL: registrar creación de mascota (cliente)
+            HistorialUsuario.objects.create(
+                usuario=request.user,  # el dueño (cliente)
+                realizado_por=request.user,
+                tipo="mascota_creada",
+                detalle=f"Se registró la mascota '{mascota.nombre_mascota}'."
+            )
+
             return Response(
                 MascotaSerializer(mascota).data,
                 status=status.HTTP_201_CREATED,
@@ -66,11 +75,17 @@ def mascotas_detail(request, pk: int):
             mascota_actualizada = mascota_service.actualizar_mascota(
                 mascota, serializer.validated_data
             )
+
+            # (Opcional) Si algún día quieres historial de ediciones de mascotas,
+            # aquí sería el lugar.
+
             return Response(MascotaSerializer(mascota_actualizada).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == "DELETE":
         mascota_service.eliminar_mascota(mascota)
+
+        # (Opcional) Si algún día quieres historial de eliminaciones, aquí.
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -99,6 +114,31 @@ def mascotas_admin_create(request):
     serializer = MascotaSerializer(data=data)
     if serializer.is_valid():
         mascota = mascota_service.crear_mascota(serializer.validated_data)
+
+        # ✅ HISTORIAL: registrar creación de mascota por admin
+        dueno = Usuario.objects.get(id_usuario=dueno_id)
+
+        HistorialUsuario.objects.create(
+            usuario=dueno,  # dueño real
+            realizado_por=request.user,  # admin que hizo la acción
+            tipo="mascota_creada_admin",
+            detalle=f"Se registró la mascota '{mascota.nombre_mascota}' para el usuario {dueno.nombre} {dueno.apellido}."
+        )
+
         return Response(MascotaSerializer(mascota).data, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def mascotas_por_usuario(request, id_usuario: int):
+    # Solo admin puede ver mascotas de cualquier usuario
+    if request.user.id_rol.id_rol != 1:
+        return Response({"error": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
+
+    from ..models import Mascota
+    mascotas = Mascota.objects.filter(id_usuario_id=id_usuario).order_by("-id_mascota")
+
+    serializer = MascotaSerializer(mascotas, many=True)
+    return Response(serializer.data)
