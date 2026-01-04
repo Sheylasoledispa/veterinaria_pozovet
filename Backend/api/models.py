@@ -137,8 +137,6 @@ class Agenda(models.Model):
     id_agenda = models.AutoField(primary_key=True)
     dia_atencion = models.DateField()
     hora_atencion = models.TimeField()
-    inicio_almuerzo = models.TimeField(null=True, blank=True)
-    fin_almuerzo = models.TimeField(null=True, blank=True)
     duracion_turno = models.DurationField()
     fecha_creacion_agenda = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     fecha_actualizacion_agenda = models.DateTimeField(auto_now=True, null=True, blank=True)

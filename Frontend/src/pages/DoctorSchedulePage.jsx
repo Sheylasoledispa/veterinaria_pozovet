@@ -17,10 +17,6 @@ const HOURS = Array.from({ length: 10 }, (_, i) => {
   };
 });
 
-// Clave para guardar horas de almuerzo en localStorage
-const getLunchKey = (doctorId, dia) =>
-  `pozovet_lunch_${doctorId}_${dia}`;
-
 const DoctorSchedulePage = () => {
   // Lista de doctores (trabajadores)
   const [doctores, setDoctores] = useState([]);
@@ -33,14 +29,14 @@ const DoctorSchedulePage = () => {
 
   // Horarios activos para ese doctor y día (array de strings "HH:MM")
   const [activeSlots, setActiveSlots] = useState([]);
-  // Horas marcadas como almuerzo (solo visual, naranja, no habilitadas)
-  const [lunchSlots, setLunchSlots] = useState([]);
 
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [scheduleError, setScheduleError] = useState("");
 
   // Mensaje corto informativo
   const [infoMessage, setInfoMessage] = useState("");
+
+  const canShowSchedule = selectedDoctorId && selectedDate;
 
   // 🔹 Cargar doctores (usuarios tipo trabajadores)
   const cargarDoctores = async () => {
@@ -61,42 +57,6 @@ const DoctorSchedulePage = () => {
     cargarDoctores();
   }, []);
 
-  // 🔹 Cargar horas de almuerzo desde localStorage
-  const cargarLunchDesdeLocalStorage = (doctorId, dia) => {
-    if (!doctorId || !dia) {
-      setLunchSlots([]);
-      return;
-    }
-    try {
-      const key = getLunchKey(doctorId, dia);
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setLunchSlots(parsed);
-        } else {
-          setLunchSlots([]);
-        }
-      } else {
-        setLunchSlots([]);
-      }
-    } catch (e) {
-      console.error("Error leyendo lunchSlots de localStorage", e);
-      setLunchSlots([]);
-    }
-  };
-
-  // 🔹 Guardar horas de almuerzo en localStorage cada vez que cambien
-  useEffect(() => {
-    if (!selectedDoctorId || !selectedDate) return;
-    try {
-      const key = getLunchKey(selectedDoctorId, selectedDate);
-      localStorage.setItem(key, JSON.stringify(lunchSlots));
-    } catch (e) {
-      console.error("Error guardando lunchSlots en localStorage", e);
-    }
-  }, [lunchSlots, selectedDoctorId, selectedDate]);
-
   // 🔹 Cargar horarios (Agenda) de un doctor en un día desde backend
   const cargarHorarios = async (doctorId, dia) => {
     if (!doctorId || !dia) return;
@@ -104,8 +64,7 @@ const DoctorSchedulePage = () => {
     try {
       setLoadingSchedule(true);
       setScheduleError("");
-      setInfoMessage("");
-
+      // 👇 ya NO tocamos infoMessage aquí
       const res = await api.get(`/agenda/horarios/doctor/${doctorId}/`, {
         params: { dia },
       });
@@ -115,8 +74,6 @@ const DoctorSchedulePage = () => {
       );
 
       setActiveSlots(horasActivas);
-      // También cargamos el almuerzo para este doctor/día
-      cargarLunchDesdeLocalStorage(doctorId, dia);
     } catch (err) {
       console.error(err);
 
@@ -128,122 +85,72 @@ const DoctorSchedulePage = () => {
         setScheduleError("No se pudieron cargar los horarios del doctor.");
       }
       setActiveSlots([]);
-      setLunchSlots([]);
     } finally {
       setLoadingSchedule(false);
     }
   };
 
-  // Cuando cambian doctor o fecha, recargar horarios
+  // Cuando cambian doctor o fecha, recargar horarios desde BD
   useEffect(() => {
     if (selectedDoctorId && selectedDate) {
+      // 👇 limpiamos mensajes SOLO cuando cambias de doctor/día
+      setScheduleError("");
+      setInfoMessage("");
       cargarHorarios(selectedDoctorId, selectedDate);
     } else {
       setActiveSlots([]);
-      setLunchSlots([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDoctorId, selectedDate]);
 
-  // 🔹 Toggle de un bloque en 3 estados: Rojo -> Verde -> Naranja -> Rojo
-  const toggleSlot = async (hora) => {
-    if (!selectedDoctorId || !selectedDate) return;
+  // 🔹 Toggle local: solo cambia el estado, NO pega al backend
+  const toggleSlot = (hora) => {
+    if (!canShowSchedule || loadingSchedule) return;
 
-    const isActive = activeSlots.includes(hora);
-    const isLunch = lunchSlots.includes(hora);
+    setScheduleError("");
+    setInfoMessage("");
 
-    // Estado actual -> siguiente:
-    // 1) Rojo (no activo, no lunch) -> Verde (activo)
-    if (!isActive && !isLunch) {
-      try {
-        setLoadingSchedule(true);
-        setScheduleError("");
-        setInfoMessage("");
-
-        const res = await api.post(
-          `/agenda/horarios/doctor/${selectedDoctorId}/toggle/`,
-          {
-            dia: selectedDate,
-            hora,
-          }
-        );
-
-        if (res.data && res.data.detail) {
-          setInfoMessage(res.data.detail);
-        }
-
-        // Recargamos desde el backend para mantener sincronizado
-        await cargarHorarios(selectedDoctorId, selectedDate);
-      } catch (err) {
-        console.error(err);
-        if (err.response && err.response.status === 403) {
-          setScheduleError(
-            "No autorizado. Solo el administrador puede cambiar horarios."
-          );
-        } else {
-          setScheduleError("No se pudo actualizar el horario.");
-        }
-      } finally {
-        setLoadingSchedule(false);
-      }
-      return;
-    }
-
-    // 2) Verde (activo, no lunch) -> Naranja (almuerzo = no disponible)
-    if (isActive && !isLunch) {
-      try {
-        setLoadingSchedule(true);
-        setScheduleError("");
-        setInfoMessage("");
-
-        // Llamamos al mismo toggle para quitarlo del backend
-        const res = await api.post(
-          `/agenda/horarios/doctor/${selectedDoctorId}/toggle/`,
-          {
-            dia: selectedDate,
-            hora,
-          }
-        );
-
-        if (res.data && res.data.detail) {
-          setInfoMessage("Bloque deshabilitado y marcado como almuerzo.");
-        }
-
-        // Quitamos de activos y agregamos a lunch
-        setActiveSlots((prev) => prev.filter((h) => h !== hora));
-        setLunchSlots((prev) =>
-          prev.includes(hora) ? prev : [...prev, hora]
-        );
-      } catch (err) {
-        console.error(err);
-        if (err.response && err.response.status === 403) {
-          setScheduleError(
-            "No autorizado. Solo el administrador puede cambiar horarios."
-          );
-        } else {
-          setScheduleError("No se pudo actualizar el horario.");
-        }
-      } finally {
-        setLoadingSchedule(false);
-      }
-      return;
-    }
-
-    // 3) Naranja (no activo, lunch) -> Rojo (no disponible, sin almuerzo)
-    if (!isActive && isLunch) {
-      // Solo lo quitamos de lunch, no tocamos backend
-      setLunchSlots((prev) => prev.filter((h) => h !== hora));
-      setInfoMessage("Bloque ya no se marca como almuerzo.");
-      return;
-    }
+    setActiveSlots((prev) =>
+      prev.includes(hora)
+        ? prev.filter((h) => h !== hora) // si estaba -> lo quitamos
+        : [...prev, hora]                // si no estaba -> lo agregamos
+    );
   };
 
-  const canShowSchedule = selectedDoctorId && selectedDate;
-
-  // 🔹 Botón de guardar agenda (solo mensaje bonito, la data ya se guarda en cada cambio)
-  const handleGuardarAgenda = () => {
+  // 🔹 Guardar agenda: ahora sí se envía todo al backend
+  const handleGuardarAgenda = async () => {
     if (!canShowSchedule) return;
-    setInfoMessage("Agenda guardada correctamente.");
+
+    try {
+      setLoadingSchedule(true);
+      setScheduleError("");
+      setInfoMessage("");
+
+      await api.put(
+        `/agenda/horarios/doctor/${selectedDoctorId}/guardar/`,
+        {
+          dia: selectedDate,
+          horas: activeSlots, // ["08:00", "09:00", ...]
+        }
+      );
+
+      // Volvemos a cargar desde el backend por si acaso
+      await cargarHorarios(selectedDoctorId, selectedDate);
+
+      // 👇 y ahora sí, este mensaje ya no se borra
+      setInfoMessage("Agenda guardada correctamente.");
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.status === 403) {
+        setScheduleError(
+          "No autorizado. Solo el administrador puede cambiar horarios."
+        );
+      } else {
+        setScheduleError("No se pudo guardar la agenda.");
+      }
+    } finally {
+      setLoadingSchedule(false);
+    }
   };
 
   return (
@@ -256,7 +163,7 @@ const DoctorSchedulePage = () => {
             <div>
               <h1 className="schedule-title">Gestión de horarios de doctores</h1>
               <p className="schedule-subtitle">
-                Define turnos de una hora para cada doctor según el día y marca sus horas de almuerzo.
+                Define turnos de una hora para cada doctor según el día seleccionado.
               </p>
             </div>
 
@@ -321,7 +228,6 @@ const DoctorSchedulePage = () => {
               <div className="sched-vertical">
                 {HOURS.map((slot) => {
                   const isActive = activeSlots.includes(slot.value);
-                  const isLunch = lunchSlots.includes(slot.value);
 
                   let rowClass = "sched-row sched-row-inactive";
                   let stateText = "No disponible";
@@ -329,9 +235,6 @@ const DoctorSchedulePage = () => {
                   if (isActive) {
                     rowClass = "sched-row sched-row-active";
                     stateText = "Habilitado";
-                  } else if (isLunch) {
-                    rowClass = "sched-row sched-row-lunch";
-                    stateText = "Almuerzo";
                   }
 
                   return (

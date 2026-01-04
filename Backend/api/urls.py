@@ -8,7 +8,10 @@ from .controllers.turno_controller import turnos_list_create, turnos_del_dia
 from api.controllers.agenda_controller import (
     horarios_doctor_por_dia,
     toggle_horario_doctor,
+    guardar_horarios_doctor,
 )
+
+
 
 
 
@@ -46,5 +49,6 @@ urlpatterns = [
       # ...
     path("agenda/horarios/doctor/<int:id_doctor>/", horarios_doctor_por_dia),
     path("agenda/horarios/doctor/<int:id_doctor>/toggle/", toggle_horario_doctor),
+    path("agenda/horarios/doctor/<int:id_doctor>/guardar/", guardar_horarios_doctor),
 
 ]
