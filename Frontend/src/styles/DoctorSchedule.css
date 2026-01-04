@@ -1,0 +1,206 @@
+/* Layout general similar a otras páginas */
+.schedule-page-wrapper {
+  min-height: calc(100vh - 120px);
+  padding: 1.5rem 1rem 2rem;
+  display: flex;
+  justify-content: center;
+  background: #f3f4f6;
+}
+
+.schedule-card {
+  width: 100%;
+  max-width: 800px;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* Header */
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.schedule-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.schedule-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Botón de guardar */
+.schedule-save-btn {
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+  transition: background-color 0.12s ease, transform 0.05s ease,
+    box-shadow 0.12s ease;
+}
+
+.schedule-save-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.3);
+}
+
+.schedule-save-btn:disabled {
+  background: #9ca3af;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Filtros */
+.schedule-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.schedule-filter-block {
+  min-width: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.schedule-input,
+.schedule-select {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+  background-color: #ffffff;
+}
+
+.schedule-input:focus,
+.schedule-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+
+/* Mensajes */
+.schedule-error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.schedule-info {
+  color: #2563eb;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.schedule-empty {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  padding: 0.75rem 0;
+}
+
+/* Lista vertical de horarios */
+.schedule-list {
+  margin-top: 0.75rem;
+}
+
+.sched-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Fila de horario tipo "horario de clases" */
+.sched-row {
+  width: 100%;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.1s ease, transform 0.05s ease,
+    box-shadow 0.05s ease, border-color 0.1s ease;
+}
+
+.sched-row:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Estado rojo: no disponible */
+.sched-row-inactive {
+  background-color: #fef2f2; /* rojo muy suave */
+  border-color: #fecaca;
+}
+
+/* Estado verde: habilitado */
+.sched-row-active {
+  background-color: #ecfdf3; /* verde muy suave */
+  border-color: #bbf7d0;
+}
+
+/* Estado naranja: almuerzo */
+.sched-row-lunch {
+  background-color: #fff7ed; /* naranja suave */
+  border-color: #fed7aa;
+}
+
+.sched-row:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+
+/* Contenido de cada fila */
+.sched-time {
+  font-weight: 600;
+  color: #111827;
+}
+
+.sched-state {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .schedule-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .schedule-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserAdminPage from "./pages/UserAdminPage";
+import DoctorSchedulePage from "./pages/DoctorSchedulePage"; // 👈 NUEVO
 
 const App = () => {
   return (
@@ -32,11 +33,21 @@ const App = () => {
         }
       />
 
-      <Route 
-        path="/admin/users" 
+      <Route
+        path="/admin/users"
         element={
           <ProtectedRoute adminOnly={true}>
             <UserAdminPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 👇 NUEVA RUTA: gestión de horarios (solo admin) */}
+      <Route
+        path="/admin/horarios"
+        element={
+          <ProtectedRoute adminOnly={true}>
+            <DoctorSchedulePage />
           </ProtectedRoute>
         }
       />
@@ -45,6 +56,5 @@ const App = () => {
     </Routes>
   );
 };
-
 
 export default App;

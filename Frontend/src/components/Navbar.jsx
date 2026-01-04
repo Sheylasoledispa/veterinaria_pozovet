@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import logoPozovet from "../assets/logo.png";
@@ -56,9 +55,14 @@ const Navbar = () => {
 
               {/* 👉 SOLO ADMIN (id_rol = 1) */}
               {usuario?.id_rol === 1 && (
-                <Link to="/admin/users" className="nav-link">
-                  Usuarios
-                </Link>
+                <>
+                  <Link to="/admin/users" className="nav-link">
+                    Usuarios
+                  </Link>
+                  <Link to="/admin/horarios" className="nav-link">
+                    Horarios
+                  </Link>
+                </>
               )}
 
               <Link to="/perfil" className="nav-btn nav-btn-outline">

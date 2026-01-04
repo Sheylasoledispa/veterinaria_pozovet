@@ -5,7 +5,10 @@ from api.controllers.usuario_controller import historial_global_usuarios
 from .controllers.mascota_controller import mascotas_admin_create
 from .controllers.mascota_controller import mascotas_por_usuario
 from .controllers.turno_controller import turnos_list_create, turnos_del_dia
-
+from api.controllers.agenda_controller import (
+    horarios_doctor_por_dia,
+    toggle_horario_doctor,
+)
 
 
 
@@ -37,7 +40,11 @@ urlpatterns = [
     path("register/", auth_controller.register, name="register"),
   
   #TURNOS  
-  path("turnos/", turnos_list_create),
-  path("turnos/dia/", turnos_del_dia),
+    path("turnos/", turnos_list_create),
+    path("turnos/dia/", turnos_del_dia),
+
+      # ...
+    path("agenda/horarios/doctor/<int:id_doctor>/", horarios_doctor_por_dia),
+    path("agenda/horarios/doctor/<int:id_doctor>/toggle/", toggle_horario_doctor),
 
 ]
