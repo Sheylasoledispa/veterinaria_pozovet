@@ -20,6 +20,21 @@ const UserAdminPage = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
+  // ✅ NUEVO: Modal para registrar mascota a un usuario (admin)
+  const [isMascotaModalOpen, setIsMascotaModalOpen] = useState(false);
+  const [mascotaOwner, setMascotaOwner] = useState(null);
+
+  // ✅ NUEVO: formulario (mismo estilo que dashboard)
+  const [nuevaMascota, setNuevaMascota] = useState({
+    nombre_mascota: "",
+    especie: "",
+    raza_mascota: "",
+    sexo: "",
+    edad_mascota: "",
+  });
+  const [mascotaError, setMascotaError] = useState("");
+  const [savingMascota, setSavingMascota] = useState(false);
+
   const cargarUsuarios = async (tipoLista) => {
     try {
       setLoading(true);
@@ -92,6 +107,60 @@ const UserAdminPage = () => {
     setIsGlobalHistoryOpen(false);
     setHistory([]);
     setHistoryError("");
+  };
+
+  // ✅ NUEVO: Abrir/cerrar modal de registrar mascota (admin)
+  const abrirMascotaModal = (usuario) => {
+    setMascotaOwner(usuario);
+    setMascotaError("");
+    setNuevaMascota({
+      nombre_mascota: "",
+      especie: "",
+      raza_mascota: "",
+      sexo: "",
+      edad_mascota: "",
+    });
+    setIsMascotaModalOpen(true);
+  };
+
+  const cerrarMascotaModal = () => {
+    setIsMascotaModalOpen(false);
+    setMascotaOwner(null);
+    setMascotaError("");
+    setSavingMascota(false);
+  };
+
+  // ✅ NUEVO: manejo de inputs del formulario mascota
+  const handleMascotaChange = (e) => {
+    const { name, value } = e.target;
+    setNuevaMascota((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ✅ NUEVO: guardar mascota para el usuario seleccionado
+  const guardarMascotaParaUsuario = async (e) => {
+    e.preventDefault();
+    if (!mascotaOwner?.id_usuario) return;
+
+    setSavingMascota(true);
+    setMascotaError("");
+
+    try {
+      // 🔥 Endpoint admin (backend) — lo creamos abajo:
+      // POST /mascotas/admin-create/
+      await api.post("/mascotas/admin-create/", {
+        ...nuevaMascota,
+        id_usuario: mascotaOwner.id_usuario, // dueño
+      });
+
+      cerrarMascotaModal();
+      // Recargar la lista por si quieres reflejar cambios (no rompe nada)
+      cargarUsuarios(tipo);
+    } catch (err) {
+      console.error(err);
+      setMascotaError("No se pudo registrar la mascota. Verifica los datos.");
+    } finally {
+      setSavingMascota(false);
+    }
   };
 
   const tituloActual =
@@ -209,6 +278,15 @@ const UserAdminPage = () => {
                       </button>
                     )}
 
+                    {/* ✅ NUEVO: botón para registrar mascota (NO quita nada) */}
+                    <button
+                      type="button"
+                      className="ua-btn-outline ua-btn-mascota"
+                      onClick={() => abrirMascotaModal(u)}
+                    >
+                      Registrar mascota
+                    </button>
+
                     <button
                       type="button"
                       className="ua-btn-danger"
@@ -309,6 +387,85 @@ const UserAdminPage = () => {
                 Cerrar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NUEVO: MODAL REGISTRAR MASCOTA PARA USUARIO */}
+      {isMascotaModalOpen && mascotaOwner && (
+        <div className="ua-modal-backdrop" onClick={cerrarMascotaModal}>
+          <div className="ua-modal ua-modal-mascota" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="ua-modal-close"
+              onClick={cerrarMascotaModal}
+            >
+              ×
+            </button>
+
+            <div className="ua-modal-header">
+              <h2 className="ua-modal-title">Registrar mascota</h2>
+              <p className="ua-modal-subtitle">
+                Dueño: <strong>{mascotaOwner.nombre} {mascotaOwner.apellido}</strong> · {mascotaOwner.correo}
+              </p>
+            </div>
+
+            <form className="ua-mascota-form" onSubmit={guardarMascotaParaUsuario}>
+              <div className="ua-mascota-row">
+                <input
+                  type="text"
+                  name="nombre_mascota"
+                  value={nuevaMascota.nombre_mascota}
+                  onChange={handleMascotaChange}
+                  placeholder="Nombre de la mascota"
+                  required
+                />
+                <input
+                  type="text"
+                  name="especie"
+                  value={nuevaMascota.especie}
+                  onChange={handleMascotaChange}
+                  placeholder="Especie (Perro, Gato...)"
+                  required
+                />
+              </div>
+
+              <div className="ua-mascota-row">
+                <input
+                  type="text"
+                  name="raza_mascota"
+                  value={nuevaMascota.raza_mascota}
+                  onChange={handleMascotaChange}
+                  placeholder="Raza"
+                />
+                <input
+                  type="text"
+                  name="sexo"
+                  value={nuevaMascota.sexo}
+                  onChange={handleMascotaChange}
+                  placeholder="Sexo"
+                />
+                <input
+                  type="number"
+                  name="edad_mascota"
+                  value={nuevaMascota.edad_mascota}
+                  onChange={handleMascotaChange}
+                  placeholder="Edad"
+                  min="0"
+                />
+              </div>
+
+              {mascotaError && <p className="ua-error">{mascotaError}</p>}
+
+              <div className="ua-modal-footer">
+                <button type="button" className="ua-btn-outline" onClick={cerrarMascotaModal}>
+                  Cancelar
+                </button>
+                <button type="submit" className="ua-btn-primary" disabled={savingMascota}>
+                  {savingMascota ? "Guardando..." : "Guardar mascota"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

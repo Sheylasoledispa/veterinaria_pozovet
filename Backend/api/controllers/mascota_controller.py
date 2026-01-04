@@ -5,6 +5,7 @@ from rest_framework import status
 
 from ..serializers import MascotaSerializer
 from ..services import mascota_service
+from ..models import Usuario 
 
 
 @api_view(["GET", "POST"])
@@ -71,3 +72,33 @@ def mascotas_detail(request, pk: int):
     if request.method == "DELETE":
         mascota_service.eliminar_mascota(mascota)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mascotas_admin_create(request):
+    # Solo admin
+    if request.user.id_rol.id_rol != 1:
+        return Response({"error": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
+
+    data = request.data.copy()
+
+    # dueño requerido
+    dueno_id = data.get("id_usuario")
+    if not dueno_id:
+        return Response({"error": "Se requiere id_usuario (dueño)."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # validar que el dueño exista
+    if not Usuario.objects.filter(id_usuario=dueno_id).exists():
+        return Response({"error": "Usuario dueño no existe."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Auditoría (admin que crea)
+    data["id_usuario_creacion_mascota"] = request.user.id_usuario
+    data["id_usuario_actualizacion_mascota"] = request.user.id_usuario
+
+    serializer = MascotaSerializer(data=data)
+    if serializer.is_valid():
+        mascota = mascota_service.crear_mascota(serializer.validated_data)
+        return Response(MascotaSerializer(mascota).data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

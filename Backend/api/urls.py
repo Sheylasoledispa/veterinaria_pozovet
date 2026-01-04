@@ -2,6 +2,8 @@ from django.urls import path
 from .controllers import estado_controller, rol_controller, usuario_controller, auth_controller,  mascota_controller
 from .controllers.usuario_controller import usuarios_por_tipo, cambiar_rol
 from api.controllers.usuario_controller import historial_global_usuarios
+from .controllers.mascota_controller import mascotas_admin_create
+
 
 urlpatterns = [
 
@@ -24,6 +26,8 @@ urlpatterns = [
   # MASCOTA
     path("mascotas/", mascota_controller.mascotas_list_create, name="mascotas_list_create"),
     path("mascotas/<int:pk>/", mascota_controller.mascotas_detail, name="mascotas_detail"),
+    path("mascotas/admin-create/", mascotas_admin_create),
+    
     
   # AUTH
     path("login/", auth_controller.login, name="login"),

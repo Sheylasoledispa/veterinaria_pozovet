@@ -426,3 +426,42 @@
   font-size: 0.8rem;
   margin-top: 0.25rem;
 }
+
+
+/* Botón extra para mascota (usa outline para no romper estilos) */
+.ua-btn-mascota {
+  margin-left: 6px;
+}
+
+/* Modal mascota: solo clases nuevas para no afectar los otros */
+.ua-modal-mascota {
+  max-width: 720px;
+}
+
+.ua-mascota-form {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ua-mascota-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ua-mascota-row input {
+  flex: 1 1 160px;
+  border-radius: 999px;
+  border: 1px solid rgba(155, 28, 143, 0.22);
+  padding: 10px 12px;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.ua-mascota-row input:focus {
+  border-color: #d81b60;
+  box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.12);
+}
+
