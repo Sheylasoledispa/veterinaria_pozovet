@@ -10,7 +10,7 @@ from .models import (
     Producto,
     Compra,
     Detalle_compra,
-    HistorialUsuario,   
+    HistorialUsuario,  
 )
 
 
@@ -117,3 +117,10 @@ class HistorialUsuarioSerializer(serializers.ModelSerializer):
         if obj.realizado_por:
             return f"{obj.realizado_por.nombre} {obj.realizado_por.apellido}"
         return None
+
+
+
+class TurnoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Turno
+        fields = "__all__"

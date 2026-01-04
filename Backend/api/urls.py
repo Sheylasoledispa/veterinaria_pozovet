@@ -4,6 +4,8 @@ from .controllers.usuario_controller import usuarios_por_tipo, cambiar_rol
 from api.controllers.usuario_controller import historial_global_usuarios
 from .controllers.mascota_controller import mascotas_admin_create
 from .controllers.mascota_controller import mascotas_por_usuario
+from .controllers.turno_controller import turnos_list_create, turnos_del_dia
+
 
 
 
@@ -33,4 +35,9 @@ urlpatterns = [
   # AUTH
     path("login/", auth_controller.login, name="login"),
     path("register/", auth_controller.register, name="register"),
+  
+  #TURNOS  
+  path("turnos/", turnos_list_create),
+  path("turnos/dia/", turnos_del_dia),
+
 ]
