@@ -1,11 +1,12 @@
-from datetime import date, time, timedelta
-
+from datetime import datetime, date, time, timedelta
+from ..models import Usuario, Agenda, Turno
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from ..models import Agenda, Usuario
+
+from ..models import Agenda, Turno, Usuario
 from ..serializers import AgendaSerializer
 
 
@@ -203,4 +204,35 @@ def guardar_horarios_doctor(request, id_doctor):
     ).order_by("hora_atencion")
 
     serializer = AgendaSerializer(agendas_finales, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def agenda_disponibilidad_doctor(request, doctor_id):
+    dia_str = request.query_params.get("dia")
+    if not dia_str:
+        return Response(
+            {"detail": "Falta el parámetro 'dia' (YYYY-MM-DD)."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        dia = date.fromisoformat(dia_str)
+    except ValueError:
+        return Response(
+            {"detail": "Formato de fecha inválido. Usa YYYY-MM-DD."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # validar que el "doctor" exista
+    if not Usuario.objects.filter(id_usuario=doctor_id).exists():
+        return Response({"detail": "Doctor no encontrado."}, status=404)
+
+    agendas = Agenda.objects.filter(
+        id_usuario_id=doctor_id,
+        dia_atencion=dia,
+    ).order_by("hora_atencion")
+
+    serializer = AgendaSerializer(agendas, many=True)
     return Response(serializer.data, status=200)

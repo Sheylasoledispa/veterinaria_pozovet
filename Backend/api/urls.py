@@ -9,6 +9,7 @@ from api.controllers.agenda_controller import (
     horarios_doctor_por_dia,
     toggle_horario_doctor,
     guardar_horarios_doctor,
+    agenda_disponibilidad_doctor
 )
 
 
@@ -46,9 +47,18 @@ urlpatterns = [
     path("turnos/", turnos_list_create),
     path("turnos/dia/", turnos_del_dia),
 
-      # ...
+      # AGENDA
     path("agenda/horarios/doctor/<int:id_doctor>/", horarios_doctor_por_dia),
     path("agenda/horarios/doctor/<int:id_doctor>/toggle/", toggle_horario_doctor),
     path("agenda/horarios/doctor/<int:id_doctor>/guardar/", guardar_horarios_doctor),
+
+    # Doctores (por ahora admins)
+    path("usuarios/doctores/", usuario_controller.usuarios_doctores),
+
+    # Disponibilidad de un doctor por fecha
+    path("agenda/horarios/doctor/<int:id_doctor>/", horarios_doctor_por_dia),
+    path("agenda/horarios/doctor/<int:id_doctor>/toggle/", toggle_horario_doctor),
+    path("agenda/horarios/doctor/<int:id_doctor>/guardar/", guardar_horarios_doctor),
+    path("agenda/disponibilidad/<int:doctor_id>/", agenda_disponibilidad_doctor),
 
 ]

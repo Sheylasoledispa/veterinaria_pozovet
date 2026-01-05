@@ -8,18 +8,32 @@ import { useAuth } from "../context/AuthContext";
 
 const DashboardPage = () => {
   const { usuario } = useAuth();
+
   const [mascotas, setMascotas] = useState([]);
   const [turnos, setTurnos] = useState([]);
+
+  // Modal turnos
   const [isTurnoModalOpen, setIsTurnoModalOpen] = useState(false);
   const [turnoError, setTurnoError] = useState("");
   const [savingTurno, setSavingTurno] = useState(false);
 
+  // Doctores + disponibilidad
+  const [doctores, setDoctores] = useState([]);
+  const [loadingDoctores, setLoadingDoctores] = useState(false);
+
+  const [slots, setSlots] = useState([]); // [{id_agenda, hora}]
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  const [selectedAgendaId, setSelectedAgendaId] = useState(null);
+  const [selectedHora, setSelectedHora] = useState("");
+
   const [nuevoTurno, setNuevoTurno] = useState({
     id_mascota: "",
-    fecha_turno: "",
-    hora_turno: "",
+    id_doctor: "",
+    dia: "",
   });
 
+  // Registro mascota (tu parte actual)
   const [showForm, setShowForm] = useState(false);
   const [nuevaMascota, setNuevaMascota] = useState({
     nombre_mascota: "",
@@ -30,17 +44,6 @@ const DashboardPage = () => {
   });
   const [errorMascota, setErrorMascota] = useState("");
 
-  // ✅ Fetch Turnos (lo dejamos como función para reutilizar en guardarTurno)
-  const fetchTurnos = async () => {
-    try {
-      const { data } = await api.get("/turnos/");
-      setTurnos(data);
-    } catch (error) {
-      console.error("Error al obtener turnos", error);
-    }
-  };
-
-  // ✅ Fetch Mascotas (igual: función reutilizable)
   const fetchMascotas = async () => {
     try {
       const { data } = await api.get("/mascotas/");
@@ -50,18 +53,24 @@ const DashboardPage = () => {
     }
   };
 
-  // ✅ IMPORTANTE: SOLO una vez al montar
+  const fetchTurnos = async () => {
+    try {
+      const { data } = await api.get("/turnos/");
+      setTurnos(data);
+    } catch (error) {
+      console.error("Error al obtener turnos", error);
+    }
+  };
+
   useEffect(() => {
     fetchMascotas();
     fetchTurnos();
   }, []);
 
+  // ====== Mascotas form ======
   const handleChangeMascota = (e) => {
     const { name, value } = e.target;
-    setNuevaMascota((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setNuevaMascota((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleRegistrarMascota = async (e) => {
@@ -71,6 +80,7 @@ const DashboardPage = () => {
     try {
       const { data } = await api.post("/mascotas/", nuevaMascota);
       setMascotas((prev) => [...prev, data]);
+
       setNuevaMascota({
         nombre_mascota: "",
         especie: "",
@@ -87,51 +97,137 @@ const DashboardPage = () => {
 
   const mascotasResumen = mascotas.slice(0, 3);
 
-  // 🔹 Abrir modal de agendar cita
-  const abrirTurnoModal = () => {
-    setTurnoError("");
-    setNuevoTurno({
-      id_mascota: "",
-      fecha_turno: "",
-      hora_turno: "",
-    });
-    setIsTurnoModalOpen(true);
+  // ===== Helpers para rango de horas =====
+  const toRange = (hhmm) => {
+    if (!hhmm) return "";
+    const [h, m] = hhmm.split(":").map(Number);
+    const endH = String((h + 1) % 24).padStart(2, "0");
+    const endM = String(m).padStart(2, "0");
+    return `${hhmm} - ${endH}:${endM}`;
   };
 
-  // 🔹 Cerrar modal
+  // ====== Turnos: abrir/cerrar modal ======
+  const abrirTurnoModal = async () => {
+    setTurnoError("");
+    setSelectedAgendaId(null);
+    setSelectedHora("");
+    setSlots([]);
+
+    setNuevoTurno({
+      id_mascota: "",
+      id_doctor: "",
+      dia: "",
+    });
+
+    setIsTurnoModalOpen(true);
+
+    // cargar doctores
+    setLoadingDoctores(true);
+    try {
+      const { data } = await api.get("/usuarios/doctores/");
+      setDoctores(data || []);
+    } catch (err) {
+      console.error(err);
+      setTurnoError("No se pudieron cargar los doctores.");
+    } finally {
+      setLoadingDoctores(false);
+    }
+  };
+
   const cerrarTurnoModal = () => {
     setIsTurnoModalOpen(false);
     setTurnoError("");
+    setSavingTurno(false);
+    setSlots([]);
+    setSelectedAgendaId(null);
+    setSelectedHora("");
   };
 
-  // 🔹 Manejar inputs del formulario
   const handleTurnoChange = (e) => {
     const { name, value } = e.target;
-    setNuevoTurno((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setNuevoTurno((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Guardar cita (turno)
+  // cuando cambie doctor o fecha -> cargar slots (disponibilidad)
+  useEffect(() => {
+    const cargarSlots = async () => {
+      if (!isTurnoModalOpen) return;
+      if (!nuevoTurno.id_doctor || !nuevoTurno.dia) {
+        setSlots([]);
+        setSelectedAgendaId(null);
+        setSelectedHora("");
+        return;
+      }
+
+      setLoadingSlots(true);
+      setTurnoError("");
+      setSlots([]);
+      setSelectedAgendaId(null);
+      setSelectedHora("");
+
+      try {
+        const { data } = await api.get(`/agenda/disponibilidad/${nuevoTurno.id_doctor}/`, {
+          params: { dia: nuevoTurno.dia },
+        });
+
+        // data viene como AgendaSerializer -> hora_atencion: "HH:MM:SS"
+        const mapped = (data || []).map((a) => ({
+          id_agenda: a.id_agenda,
+          hora: (a.hora_atencion || a.hora || "").slice(0, 5),
+        }));
+
+        setSlots(mapped);
+      } catch (err) {
+        console.error(err);
+        setTurnoError("No se pudieron cargar las horas disponibles.");
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    cargarSlots();
+  }, [isTurnoModalOpen, nuevoTurno.id_doctor, nuevoTurno.dia]);
+
+  // Guardar turno
   const guardarTurno = async (e) => {
     e.preventDefault();
     setSavingTurno(true);
     setTurnoError("");
 
+    if (!nuevoTurno.id_mascota) {
+      setSavingTurno(false);
+      return setTurnoError("Selecciona una mascota.");
+    }
+    if (!nuevoTurno.id_doctor) {
+      setSavingTurno(false);
+      return setTurnoError("Selecciona un doctor.");
+    }
+    if (!nuevoTurno.dia) {
+      setSavingTurno(false);
+      return setTurnoError("Selecciona una fecha.");
+    }
+    if (!selectedAgendaId || !selectedHora) {
+      setSavingTurno(false);
+      return setTurnoError("Selecciona una hora disponible.");
+    }
+
     try {
       await api.post("/turnos/", {
-        ...nuevoTurno,
         id_mascota: Number(nuevoTurno.id_mascota),
+        id_agenda: Number(selectedAgendaId),
+        fecha_turno: nuevoTurno.dia,
+        hora_turno: selectedHora,
       });
 
       cerrarTurnoModal();
-
-      // ✅ refrescar lista de turnos (ya no hace loop)
       fetchTurnos();
     } catch (err) {
       console.error(err);
-      setTurnoError("No se pudo agendar la cita.");
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.detail ||
+        "No se pudo agendar la cita.";
+      setTurnoError(msg);
     } finally {
       setSavingTurno(false);
     }
@@ -147,31 +243,26 @@ const DashboardPage = () => {
             <div>
               <h1 className="dash-title">Hola, {usuario?.nombre || "usuario"} 👋</h1>
               <p className="dash-subtitle">
-                Este es tu panel en PozoVet. Aquí puedes ver un resumen de tus
-                mascotas atendidas.
+                Este es tu panel en PozoVet. Aquí puedes ver un resumen de tus mascotas y tus citas.
               </p>
             </div>
           </header>
 
           <section className="dash-cards">
-            {/* Tarjeta de resumen */}
+            {/* ✅ Tarjeta de citas */}
             <div className="dash-card">
-              <span className="dash-card-label">Mascotas registradas</span>
-              <span className="dash-card-value">{mascotas.length}</span>
+              <span className="dash-card-label">Citas agendadas</span>
+              <span className="dash-card-value">{turnos.length}</span>
               <span className="dash-card-hint">
-                Revisa el listado completo y agrega nuevas mascotas desde tu panel.
+                Agenda una cita seleccionando mascota, doctor, fecha y hora disponible.
               </span>
 
-              <button
-                type="button"
-                className="dash-card-btn"
-                onClick={abrirTurnoModal}
-              >
+              <button type="button" className="dash-card-btn" onClick={abrirTurnoModal}>
                 Agendar cita
               </button>
             </div>
 
-            {/* Tarjeta transformada: gestión de mascotas */}
+            {/* Tarjeta mascotas */}
             <div className="dash-card dash-card-accent dash-card-mascotas">
               <span className="dash-card-label">Tus mascotas</span>
 
@@ -186,9 +277,7 @@ const DashboardPage = () => {
                       </span>
                     ))}
                     {mascotas.length > 3 && (
-                      <span className="dash-mascota-mas">
-                        + {mascotas.length - 3} más
-                      </span>
+                      <span className="dash-mascota-mas">+ {mascotas.length - 3} más</span>
                     )}
                   </div>
                   <span className="dash-card-hint">
@@ -295,12 +384,14 @@ const DashboardPage = () => {
         </section>
       </main>
 
+      {/* ✅ MODAL: Agendar cita */}
       {isTurnoModalOpen && (
         <div className="dash-modal-backdrop" onClick={cerrarTurnoModal}>
           <div className="dash-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="dash-modal-title">Agendar cita</h3>
 
             <form className="dash-form" onSubmit={guardarTurno}>
+              {/* Mascota */}
               <select
                 name="id_mascota"
                 value={nuevoTurno.id_mascota}
@@ -315,21 +406,71 @@ const DashboardPage = () => {
                 ))}
               </select>
 
-              <div className="dash-form-row">
-                <input
-                  type="date"
-                  name="fecha_turno"
-                  value={nuevoTurno.fecha_turno}
-                  onChange={handleTurnoChange}
-                  required
-                />
-                <input
-                  type="time"
-                  name="hora_turno"
-                  value={nuevoTurno.hora_turno}
-                  onChange={handleTurnoChange}
-                  required
-                />
+              {/* Doctor */}
+              <select
+                name="id_doctor"
+                value={nuevoTurno.id_doctor}
+                onChange={handleTurnoChange}
+                required
+                disabled={loadingDoctores}
+              >
+                <option value="">
+                  {loadingDoctores ? "Cargando doctores..." : "Selecciona un doctor"}
+                </option>
+                {doctores.map((d) => (
+                  <option key={d.id_usuario} value={d.id_usuario}>
+                    {d.nombre} {d.apellido}
+                  </option>
+                ))}
+              </select>
+
+              {/* Fecha */}
+              <input
+                type="date"
+                name="dia"
+                value={nuevoTurno.dia}
+                onChange={handleTurnoChange}
+                required
+              />
+
+              {/* Horas */}
+              <div className="dash-hours-box">
+                <p className="dash-hours-title">Horas disponibles</p>
+
+                {loadingSlots && <p className="dash-hours-loading">Cargando horas...</p>}
+
+                {!loadingSlots &&
+                  slots.length === 0 &&
+                  nuevoTurno.id_doctor &&
+                  nuevoTurno.dia && (
+                    <p className="dash-hours-empty">
+                      No hay horarios para ese doctor en esa fecha.
+                    </p>
+                  )}
+
+                {!loadingSlots && slots.length > 0 && (
+                  <div className="dash-hours-list">
+                    {slots.map((s) => {
+                      const isActive =
+                        Number(selectedAgendaId) === Number(s.id_agenda);
+
+                      return (
+                        <button
+                          key={s.id_agenda}
+                          type="button"
+                          className={`dash-hour-pill ${isActive ? "active" : ""}`}
+                          onClick={() => {
+                            setSelectedAgendaId(s.id_agenda);
+                            setSelectedHora(s.hora);
+                            setTurnoError("");
+                          }}
+                        >
+                          {toRange(s.hora)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {turnoError && <p className="dash-error">{turnoError}</p>}

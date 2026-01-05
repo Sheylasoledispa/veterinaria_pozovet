@@ -217,3 +217,35 @@ def historial_global_usuarios(request):
     )
     serializer = HistorialUsuarioSerializer(logs, many=True)
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def doctores_list(request):
+    # Por ahora: los doctores son los admins (id_rol = 1)
+    if request.user.id_rol.id_rol != 1:
+        return Response({"error": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
+
+    doctores = Usuario.objects.filter(id_rol__id_rol=1).order_by("nombre", "apellido")
+    data = [
+        {
+            "id_usuario": d.id_usuario,
+            "nombre": d.nombre,
+            "apellido": d.apellido,
+            "correo": d.correo,
+        }
+        for d in doctores
+    ]
+    return Response(data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def usuarios_doctores(request):
+    """
+    Devuelve lista simple de doctores.
+    Por ahora: doctores = usuarios con rol admin (id_rol = 1)
+    """
+    doctores = Usuario.objects.filter(id_rol__id_rol=1).values(
+        "id_usuario", "nombre", "apellido", "correo"
+    )
+    return Response(list(doctores))

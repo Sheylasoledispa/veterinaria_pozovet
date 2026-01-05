@@ -33,7 +33,7 @@ def turnos_list_create(request):
         turnos = turno_service.listar_turnos_por_usuario(request.user.id_usuario)
         return Response(TurnoSerializer(turnos, many=True).data)
 
-    # Cliente: crea turno para una mascota suya
+     # Cliente: crea turno para una mascota suya
     if request.method == "POST":
         data = request.data.copy()
 
@@ -45,15 +45,37 @@ def turnos_list_create(request):
         if not Mascota.objects.filter(id_mascota=id_mascota, id_usuario_id=request.user.id_usuario).exists():
             return Response({"error": "Mascota no válida para este usuario"}, status=status.HTTP_403_FORBIDDEN)
 
+        # validar agenda seleccionada (OBLIGATORIA en tu nuevo flujo)
+        id_agenda = data.get("id_agenda")
+        if not id_agenda:
+            return Response({"error": "Se requiere id_agenda (hora del doctor)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            agenda = Agenda.objects.get(id_agenda=id_agenda)
+        except Agenda.DoesNotExist:
+            return Response({"error": "Agenda no encontrada."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # validar que fecha/hora coincidan con la agenda
+        fecha_turno = data.get("fecha_turno")
+        hora_turno = data.get("hora_turno")
+        if not fecha_turno or not hora_turno:
+            return Response({"error": "Se requiere fecha_turno y hora_turno."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if str(agenda.dia_atencion) != str(fecha_turno):
+            return Response({"error": "La fecha no coincide con la agenda del doctor."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if agenda.hora_atencion.strftime("%H:%M") != str(hora_turno)[:5]:
+            return Response({"error": "La hora no coincide con la agenda del doctor."}, status=status.HTTP_400_BAD_REQUEST)
+
         # estado pendiente
         estado_pendiente = _get_estado_pendiente()
         if not estado_pendiente:
             return Response({"error": "No existe el Estado 'Pendiente' en la BD"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # agenda por defecto
-        agenda = _get_agenda_default()
-        if not agenda:
-            return Response({"error": "No hay agendas creadas. Crea al menos 1 Agenda."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # (opcional recomendado) evitar doble reserva misma agenda
+        from ..models import Turno
+        if Turno.objects.filter(id_agenda=agenda, fecha_turno=agenda.dia_atencion, hora_turno=agenda.hora_atencion).exists():
+            return Response({"error": "Esa hora ya está reservada."}, status=status.HTTP_409_CONFLICT)
 
         # asignaciones obligatorias
         data["id_usuario"] = request.user.id_usuario
@@ -68,17 +90,16 @@ def turnos_list_create(request):
         if serializer.is_valid():
             turno = turno_service.crear_turno(serializer.validated_data)
 
-            # ✅ HISTORIAL: registrar creación de turno
             HistorialUsuario.objects.create(
                 usuario=request.user,
                 realizado_por=request.user,
                 tipo="turno_creado",
-                detalle=f"Se agendó un turno para la mascota ID {turno.id_mascota_id} el {turno.fecha_turno} a las {turno.hora_turno}."
+                detalle=f"Se agendó un turno con el doctor ID {agenda.id_usuario_id} para la mascota ID {turno.id_mascota_id} el {turno.fecha_turno} a las {turno.hora_turno}."
             )
 
             return Response(TurnoSerializer(turno).data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
 
 @api_view(["GET"])
