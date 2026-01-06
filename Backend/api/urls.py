@@ -12,6 +12,11 @@ from api.controllers.agenda_controller import (
     agenda_disponibilidad_doctor
 )
 
+from .controllers.consulta_controller import (
+    turnos_para_consulta,
+    consulta_por_turno,
+)
+
 
 
 
@@ -61,4 +66,7 @@ urlpatterns = [
     path("agenda/horarios/doctor/<int:id_doctor>/guardar/", guardar_horarios_doctor),
     path("agenda/disponibilidad/<int:doctor_id>/", agenda_disponibilidad_doctor),
 
+  # CONSULTAS
+  path("consultas/turnos/", turnos_para_consulta),
+    path("consultas/por-turno/<int:id_turno>/", consulta_por_turno),
 ]

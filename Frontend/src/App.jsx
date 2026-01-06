@@ -7,6 +7,8 @@ import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserAdminPage from "./pages/UserAdminPage";
 import DoctorSchedulePage from "./pages/DoctorSchedulePage"; // 👈 NUEVO
+import ConsultasAdminPage from "./pages/ConsultasAdminPage";
+
 
 const App = () => {
   return (
@@ -51,6 +53,16 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+      
+      <Route
+  path="/admin/consultas"
+  element={
+    <ProtectedRoute adminOnly={true}>
+      <ConsultasAdminPage />
+    </ProtectedRoute>
+  }
+/>
+
 
       <Route path="*" element={<p>404 - Página no encontrada</p>} />
     </Routes>
@@ -58,3 +70,5 @@ const App = () => {
 };
 
 export default App;
+
+

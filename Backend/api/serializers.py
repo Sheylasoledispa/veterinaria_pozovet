@@ -66,6 +66,59 @@ class TurnoSerializer(serializers.ModelSerializer):
         model = Turno
         fields = "__all__"
 
+class TurnoConsultaSerializer(serializers.ModelSerializer):
+    # Datos del cliente (dueño)
+    cliente_nombre = serializers.CharField(source="id_usuario.nombre", read_only=True)
+    cliente_apellido = serializers.CharField(source="id_usuario.apellido", read_only=True)
+    cliente_correo = serializers.CharField(source="id_usuario.correo", read_only=True)
+
+    # Datos de la mascota
+    mascota_nombre = serializers.CharField(source="id_mascota.nombre_mascota", read_only=True)
+    mascota_especie = serializers.CharField(source="id_mascota.especie", read_only=True)
+    mascota_raza = serializers.CharField(source="id_mascota.raza_mascota", read_only=True)
+
+    # Datos del doctor (usuario asociado a la agenda)
+    doctor_nombre = serializers.CharField(
+        source="id_agenda.id_usuario.nombre", read_only=True
+    )
+    doctor_apellido = serializers.CharField(
+        source="id_agenda.id_usuario.apellido", read_only=True
+    )
+
+    # Estado del turno
+    estado_descripcion = serializers.CharField(
+        source="id_estado.descripcion_estado", read_only=True
+    )
+
+    # Saber si ya tiene o no consulta
+    tiene_consulta = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Turno
+        fields = [
+            "id_turno",
+            "fecha_turno",
+            "hora_turno",
+            "id_usuario",
+            "id_mascota",
+            "id_agenda",
+            "id_estado",
+            "cliente_nombre",
+            "cliente_apellido",
+            "cliente_correo",
+            "mascota_nombre",
+            "mascota_especie",
+            "mascota_raza",
+            "doctor_nombre",
+            "doctor_apellido",
+            "estado_descripcion",
+            "tiene_consulta",
+        ]
+
+    def get_tiene_consulta(self, obj):
+        return obj.consultas.exists()
+
+
 
 class ConsultaSerializer(serializers.ModelSerializer):
     class Meta:

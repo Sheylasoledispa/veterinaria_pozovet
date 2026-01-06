@@ -62,6 +62,9 @@ const Navbar = () => {
                   <Link to="/admin/horarios" className="nav-link">
                     Horarios
                   </Link>
+                  <Link to="/admin/consultas" className="nav-link">
+                    Consultas
+                  </Link>
                 </>
               )}
 
