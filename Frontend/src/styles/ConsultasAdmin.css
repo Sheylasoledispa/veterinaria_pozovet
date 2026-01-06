@@ -10,23 +10,23 @@
   width: 100%;
   max-width: 1000px;
   background: #ffffff;
-  border-radius: 1rem;
-  padding: 1.5rem 1.75rem;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border-radius: 1.25rem;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
 }
 
 /* Header */
 .cp-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 0.9rem;
 }
 
 .cp-title {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.45rem;
+  font-weight: 800;
   color: #111827;
   margin: 0;
 }
@@ -37,12 +37,41 @@
   color: #6b7280;
 }
 
+/* Leyenda (esquina superior derecha) */
+.cp-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: #4b5563;
+}
+
+.cp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cp-legend-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+}
+
+.cp-legend-dot-ok {
+  background: #22c55e; /* Consulta registrada */
+}
+
+.cp-legend-dot-pending {
+  background: #f97316; /* Sin consulta */
+}
+
 /* Summary */
 .cp-summary {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
 .cp-pill {
@@ -50,11 +79,12 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.8rem;
-  padding: 0.25rem 0.7rem;
+  padding: 0.25rem 0.9rem;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-weight: 500;
+  background: #f5f3ff;   /* morado muy clarito */
+  color: #6d28d9;        /* morado principal */
+  font-weight: 600;
+  border: 1px solid #e9d5ff;
 }
 
 /* Textos varios */
@@ -65,7 +95,7 @@
 }
 
 .cp-info {
-  color: #2563eb;
+  color: #6d28d9;
   font-size: 0.85rem;
   margin-top: 0.25rem;
 }
@@ -84,30 +114,44 @@
 
 /* Lista de turnos */
 .cp-list {
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
+/* Tarjeta de turno */
 .cp-turno-card {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.8rem 1rem;
-  border-radius: 0.85rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 1rem;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   cursor: pointer;
-  transition: background-color 0.1s ease, transform 0.05s ease,
-    box-shadow 0.08s ease, border-color 0.1s ease;
+  transition:
+    background-color 0.12s ease,
+    transform 0.06s ease,
+    box-shadow 0.1s ease,
+    border-color 0.12s ease;
+  position: relative;
+}
+
+/* Borde lateral de estado (mantengo verde/naranja pero suave) */
+.cp-turno-card-ok {
+  border-left: 4px solid #821d94;
+}
+
+.cp-turno-card-pending {
+  border-left: 4px solid #f97316;
 }
 
 .cp-turno-card:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: #f5f3ff;         /* toque morado suave */
+  border-color: #e9d5ff;
+  box-shadow: 0 10px 22px rgba(88, 28, 135, 0.12);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
 }
 
 .cp-turno-main {
@@ -115,46 +159,49 @@
 }
 
 .cp-turno-date {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.86rem;
+  font-weight: 700;
   color: #4b5563;
-  margin: 0 0 0.15rem;
+  margin: 0 0 0.25rem;
 }
 
 .cp-turno-client,
 .cp-turno-mascota,
 .cp-turno-doctor {
-  margin: 0.1rem 0;
-  font-size: 0.88rem;
+  margin: 0.12rem 0;
+  font-size: 0.9rem;
   color: #111827;
 }
 
-/* Meta info */
+/* Meta info (chips de estado) */
 .cp-turno-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
-  min-width: 170px;
+  min-width: 190px;
 }
 
 .cp-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.15rem 0.55rem;
+  padding: 0.18rem 0.7rem;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
+/* Estado del turno (siempre morado) */
 .cp-chip-estado {
-  background: #eef2ff;
-  color: #3730a3;
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
 }
 
+/* Estado de consulta (verde / naranja) */
 .cp-chip-consulta {
   border: 1px solid transparent;
 }
@@ -187,21 +234,26 @@
   width: 100%;
   max-width: 720px;
   background: #ffffff;
-  border-radius: 1rem;
-  padding: 1.25rem 1.5rem 1.1rem;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.4);
+  border-radius: 1.25rem;
+  padding: 1.4rem 1.7rem 1.1rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.55);
   position: relative;
+  border: 1px solid #e5e7eb;
 }
 
 .cp-modal-close {
   position: absolute;
-  top: 0.6rem;
-  right: 0.7rem;
+  top: 0.7rem;
+  right: 0.8rem;
   border: none;
   background: transparent;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  color: #6b7280;
+  color: #9ca3af;
+}
+
+.cp-modal-close:hover {
+  color: #4b5563;
 }
 
 .cp-modal-header {
@@ -211,16 +263,17 @@
 .cp-modal-title {
   margin: 0;
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #111827;
 }
 
 .cp-modal-subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.9rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
   color: #6b7280;
 }
 
+/* Cuerpo del modal */
 .cp-modal-body {
   margin-top: 0.5rem;
 }
@@ -239,38 +292,45 @@
 
 .cp-textarea {
   width: 100%;
-  border-radius: 0.6rem;
-  border: 1px solid #d1d5db;
-  padding: 0.45rem 0.55rem;
-  font-size: 0.88rem;
+  border-radius: 0.75rem;
+  border: 1px solid #d4d4d8;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
   resize: vertical;
   min-height: 70px;
   outline: none;
-  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease,
+    background-color 0.12s ease;
+  background: #f9fafb;
 }
 
 .cp-textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+  border-color: #a855f7;
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.35);
+  background: #ffffff;
 }
 
+/* Footer del modal */
 .cp-modal-footer {
-  margin-top: 0.75rem;
+  margin-top: 0.9rem;
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.55rem;
 }
 
 /* Botones */
 .cp-btn {
-  padding: 0.4rem 0.9rem;
-  border-radius: 0.6rem;
+  padding: 0.42rem 1rem;
+  border-radius: 0.8rem;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease,
+    transform 0.06s ease, color 0.1s ease;
 }
 
+/* Cancelar */
 .cp-btn-outline {
   background: #ffffff;
   color: #374151;
@@ -281,22 +341,36 @@
   background: #f3f4f6;
 }
 
+/* Guardar (morado principal) */
 .cp-btn-primary {
-  background: #2563eb;
+  background: #7c3aed;
   color: #ffffff;
+  box-shadow: 0 8px 18px rgba(124, 58, 237, 0.3);
 }
 
 .cp-btn-primary:hover {
-  background: #1d4ed8;
+  background: #6d28d9;
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.37);
+  transform: translateY(-1px);
 }
 
 .cp-btn:disabled {
   opacity: 0.7;
   cursor: default;
+  box-shadow: none;
 }
 
 /* Responsivo */
 @media (max-width: 768px) {
+  .cp-card {
+    padding: 1.35rem 1.1rem;
+  }
+
+  .cp-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .cp-turno-card {
     flex-direction: column;
     align-items: flex-start;
@@ -309,6 +383,6 @@
 
   .cp-modal {
     max-width: 100%;
+    padding: 1.2rem 1.1rem 1rem;
   }
 }
-

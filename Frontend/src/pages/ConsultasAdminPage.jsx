@@ -148,8 +148,20 @@ const ConsultasAdminPage = () => {
               <h1 className="cp-title">Gestión de consultas</h1>
               <p className="cp-subtitle">
                 Revisa los turnos de las mascotas, completa el diagnóstico y
-                guarda la consulta médica.
+                guarda la consulta médica de cada atención.
               </p>
+            </div>
+
+            {/* Leyenda pequeña de estados */}
+            <div className="cp-legend">
+              <div className="cp-legend-item">
+                <span className="cp-legend-dot cp-legend-dot-ok" />
+                <span>Consulta registrada</span>
+              </div>
+              <div className="cp-legend-item">
+                <span className="cp-legend-dot cp-legend-dot-pending" />
+                <span>Sin consulta</span>
+              </div>
             </div>
           </div>
 
@@ -161,9 +173,7 @@ const ConsultasAdminPage = () => {
           {loadingTurnos && <p className="cp-loading">Cargando turnos...</p>}
 
           {!loadingTurnos && turnos.length === 0 && (
-            <p className="cp-empty">
-              No hay turnos registrados todavía.
-            </p>
+            <p className="cp-empty">No hay turnos registrados todavía.</p>
           )}
 
           <div className="cp-list">
@@ -172,10 +182,16 @@ const ConsultasAdminPage = () => {
               const horaStr = t.hora_turno?.slice(0, 5) || "";
               const tieneConsulta = t.tiene_consulta;
 
+              const cardClasses =
+                "cp-turno-card " +
+                (tieneConsulta
+                  ? "cp-turno-card-ok"
+                  : "cp-turno-card-pending");
+
               return (
                 <div
                   key={t.id_turno}
-                  className="cp-turno-card"
+                  className={cardClasses}
                   onClick={() => abrirModalConsulta(t)}
                 >
                   <div className="cp-turno-main">
@@ -198,14 +214,20 @@ const ConsultasAdminPage = () => {
                   </div>
 
                   <div className="cp-turno-meta">
-                    <span className="cp-chip cp-chip-estado">
-                      {t.estado_descripcion || "Sin estado"}
-                    </span>
+                     {/* Solo mostramos el estado (PENDIENTE) si aún no hay consulta */}
+  {!tieneConsulta && (
+    <span className="cp-chip cp-chip-estado">
+      {t.estado_descripcion || "Sin estado"}
+    </span>
+  )}
+
 
                     <span
                       className={
                         "cp-chip cp-chip-consulta " +
-                        (tieneConsulta ? "cp-chip-consulta-ok" : "cp-chip-consulta-pending")
+                        (tieneConsulta
+                          ? "cp-chip-consulta-ok"
+                          : "cp-chip-consulta-pending")
                       }
                     >
                       {tieneConsulta ? "Consulta registrada" : "Sin consulta"}
@@ -221,10 +243,7 @@ const ConsultasAdminPage = () => {
       {/* MODAL PARA LLENAR / EDITAR CONSULTA */}
       {isModalOpen && selectedTurno && (
         <div className="cp-modal-backdrop" onClick={cerrarModalConsulta}>
-          <div
-            className="cp-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className="cp-modal-close"
@@ -325,4 +344,3 @@ const ConsultasAdminPage = () => {
 };
 
 export default ConsultasAdminPage;
-
