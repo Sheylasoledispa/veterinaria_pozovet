@@ -53,7 +53,7 @@ const Navbar = () => {
                 Inicio
               </Link>
 
-              {/* 👉 SOLO ADMIN (id_rol = 1) */}
+              {/*  SOLO ADMIN (id_rol = 1) */}
               {usuario?.id_rol === 1 && (
                 <>
                   <Link to="/admin/users" className="nav-link">
