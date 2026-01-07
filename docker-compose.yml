@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: pozovet_db
+    environment:
+      POSTGRES_DB: pozovet_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: post123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: pozovet_backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DB_NAME: pozovet_db
+      DB_USER: postgres
+      DB_PASSWORD: post123
+      DB_HOST: db
+      DB_PORT: 5432
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile.frontend
+    container_name: pozovet_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      # Tu React usará esta URL para llamar al backend
+      VITE_API_URL: "http://localhost:8000/api"
+
+volumes:
+  postgres_data:

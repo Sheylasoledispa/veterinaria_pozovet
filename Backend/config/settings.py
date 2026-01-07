@@ -78,15 +78,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+import os
 DATABASES = {
       "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "BD_VETERINARIA_POZOVET",
-        "USER": "postgres",
-        "PASSWORD": "123456",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": os.environ.get("DB_NAME", "BD_VETERINARIA_POZOVET"),      # nombre local por defecto
+        "USER": os.environ.get("DB_USER", "postgres"),               # usuario local por defecto
+        "PASSWORD": os.environ.get("DB_PASSWORD", "123456"),    # password local por defecto
+        "HOST": os.environ.get("DB_HOST", "localhost"),              # host local
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
 

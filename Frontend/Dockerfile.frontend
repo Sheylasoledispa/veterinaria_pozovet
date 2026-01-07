@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiamos package.json y package-lock.json (si existe)
+COPY package*.json ./
+
+# Instalamos dependencias
+RUN npm install
+
+# Copiamos el resto del frontend
+COPY . .
+
+# Vite por defecto usa el 5173
+EXPOSE 5173
+
+# Levantamos el servidor de desarrollo de Vite
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
