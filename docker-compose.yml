@@ -13,6 +13,40 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  db_replica:
+    image: postgres:16
+    container_name: pozovet_db_replica
+    environment:
+      POSTGRES_DB: pozovet_db           # mismo nombre de BD
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: post123    # misma clave que la principal
+    ports:
+      - "5434:5432"   # expone la réplica por 5434 en tu máquina
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+
+  db_sync:
+    image: postgres:16
+    container_name: pozovet_db_sync
+    depends_on:
+      - db
+      - db_replica
+    environment:
+      PGPASSWORD: post123   # para pg_dump y psql
+    command: >
+      sh -c "
+        while true; do
+          echo '--- Actualizando réplica de Base De Datos... ---';
+
+          pg_dump -h db -U postgres -d pozovet_db --clean --if-exists | psql -h db_replica -U postgres -d pozovet_db;
+
+          echo '--- Replica actualizada. Esperando 60s... ---';
+          sleep 60;
+        done
+      "
+
+
+
   backend:
     build:
       context: .
@@ -23,6 +57,7 @@ services:
              python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
+      - files_data:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -47,5 +82,18 @@ services:
       # Tu React usará esta URL para llamar al backend
       VITE_API_URL: "http://localhost:8000/api"
 
+  file_server:
+    image: nginx:alpine
+    container_name: pozovet_files
+    ports:
+      - "9000:80"   # host:contendor → http://localhost:9000
+    volumes:
+      - files_data:/usr/share/nginx/html/media  # mismo volumen, distinta ruta
+    depends_on:
+      - backend
+      
+
 volumes:
   postgres_data:
+  files_data:
+  postgres_replica_data:
