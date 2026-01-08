@@ -24,7 +24,9 @@ services:
       - "5434:5432"   # expone la réplica por 5434 en tu máquina
     volumes:
       - postgres_replica_data:/var/lib/postgresql/data
+  
 
+  #funcion para la copia de la base espejo
   db_sync:
     image: postgres:16
     container_name: pozovet_db_sync
@@ -79,14 +81,14 @@ services:
     depends_on:
       - backend
     environment:
-      # Tu React usará esta URL para llamar al backend
+      # llamar al backend
       VITE_API_URL: "http://localhost:8000/api"
 
   file_server:
     image: nginx:alpine
     container_name: pozovet_files
     ports:
-      - "9000:80"   # host:contendor → http://localhost:9000
+      - "9000:80"   # host:contendor http://localhost:9000
     volumes:
       - files_data:/usr/share/nginx/html/media  # mismo volumen, distinta ruta
     depends_on:
@@ -97,3 +99,5 @@ volumes:
   postgres_data:
   files_data:
   postgres_replica_data:
+
+ 
