@@ -16,6 +16,8 @@ from .controllers.consulta_controller import (
     turnos_para_consulta,
     consulta_por_turno,
 )
+from .controllers.turno_controller import cancelar_turno
+
 
 
 
@@ -69,4 +71,6 @@ urlpatterns = [
   # CONSULTAS
   path("consultas/turnos/", turnos_para_consulta),
     path("consultas/por-turno/<int:id_turno>/", consulta_por_turno),
+    path("turnos/<int:id_turno>/cancelar/", cancelar_turno),
+
 ]

@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.utils import timezone
 from ..serializers import TurnoSerializer
 from ..services import turno_service
 from ..models import Mascota, Estado, Agenda, HistorialUsuario, Usuario
@@ -12,6 +12,11 @@ from ..models import Mascota, Estado, Agenda, HistorialUsuario, Usuario
 def _get_estado_pendiente():
     try:
         return Estado.objects.get(descripcion_estado__iexact="Pendiente")
+    except Estado.DoesNotExist:
+        return None
+def _get_estado_cancelada():
+    try:
+        return Estado.objects.get(descripcion_estado__iexact="Cancelada")
     except Estado.DoesNotExist:
         return None
 
@@ -120,3 +125,68 @@ def turnos_del_dia(request):
 
     turnos = turno_service.listar_turnos_del_dia(fecha)
     return Response(TurnoSerializer(turnos, many=True).data)
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def cancelar_turno(request, id_turno):
+    from ..models import Turno
+
+    # 1️⃣ Buscar turno
+    try:
+        turno = Turno.objects.get(id_turno=id_turno)
+    except Turno.DoesNotExist:
+        return Response(
+            {"error": "Turno no encontrado."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # 2️⃣ Seguridad: solo dueño o admin
+    es_dueno = turno.id_usuario_id == request.user.id_usuario
+    es_admin = request.user.id_rol.id_rol == 1  # ajusta si tu admin usa otro id
+
+    if not (es_dueno or es_admin):
+        return Response(
+            {"error": "No autorizado para cancelar este turno."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # 3️⃣ No cancelar si ya tiene consulta
+    if turno.consultas.exists():
+        return Response(
+            {"error": "No se puede cancelar un turno que ya tiene consulta."},
+            status=status.HTTP_409_CONFLICT
+        )
+
+    # 4️⃣ Obtener estado Cancelada
+    estado_cancelada = _get_estado_cancelada()
+    if not estado_cancelada:
+        return Response(
+            {"error": "No existe el estado 'Cancelada' en la base de datos."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    # 5️⃣ Si ya estaba cancelado
+    if turno.id_estado_id == estado_cancelada.id_estado:
+        return Response(
+            {"detail": "El turno ya estaba cancelado."},
+            status=status.HTTP_200_OK
+        )
+
+    # 6️⃣ Cancelar turno
+    turno.id_estado = estado_cancelada
+    turno.id_usuario_actualizacion_turno = request.user.id_usuario
+    turno.save()
+
+    # 7️⃣ Auditoría
+    HistorialUsuario.objects.create(
+        usuario=turno.id_usuario,
+        realizado_por=request.user,
+        tipo="turno_cancelado",
+        detalle=f"Se canceló el turno ID {turno.id_turno} del {turno.fecha_turno} a las {turno.hora_turno}."
+    )
+
+    return Response(
+        {"detail": "Turno cancelado correctamente."},
+        status=status.HTTP_200_OK
+    )

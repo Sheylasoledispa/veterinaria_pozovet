@@ -103,31 +103,51 @@ const ConsultasAdminPage = () => {
 
       if (consultaExists) {
         // Actualizar
-        await api.put(
-          `/consultas/por-turno/${selectedTurno.id_turno}/`,
-          payload
-        );
+        await api.put(`/consultas/por-turno/${selectedTurno.id_turno}/`, payload);
       } else {
         // Crear
-        await api.post(
-          `/consultas/por-turno/${selectedTurno.id_turno}/`,
-          payload
-        );
+        await api.post(`/consultas/por-turno/${selectedTurno.id_turno}/`, payload);
         setConsultaExists(true);
       }
 
       setConsultaInfo("Consulta guardada correctamente.");
-      // Recargar lista de turnos para actualizar el estado "tiene_consulta"
-      await cargarTurnos();
+      await cargarTurnos(); // refresca lista
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 403) {
-        setConsultaError(
-          "No autorizado. Solo el administrador puede gestionar consultas."
-        );
+        setConsultaError("No autorizado. Solo el administrador puede gestionar consultas.");
       } else {
         setConsultaError("No se pudo guardar la consulta.");
       }
+    } finally {
+      setLoadingConsulta(false);
+    }
+  };
+
+  // ✅ NUEVO: Cancelar turno
+  const cancelarTurno = async () => {
+    if (!selectedTurno) return;
+
+    const ok = window.confirm("¿Seguro que quieres cancelar este turno?");
+    if (!ok) return;
+
+    try {
+      setLoadingConsulta(true);
+      setConsultaError("");
+      setConsultaInfo("");
+
+      await api.patch(`/turnos/${selectedTurno.id_turno}/cancelar/`);
+
+      setConsultaInfo("Turno cancelado correctamente.");
+      await cargarTurnos(); // refresca lista
+
+      // actualizar selectedTurno en el modal (para que muestre cancelada si sigues abierto)
+      setSelectedTurno((prev) =>
+        prev ? { ...prev, estado_descripcion: "Cancelada" } : prev
+      );
+    } catch (err) {
+      console.error(err);
+      setConsultaError(err?.response?.data?.error || "No se pudo cancelar el turno.");
     } finally {
       setLoadingConsulta(false);
     }
@@ -147,8 +167,8 @@ const ConsultasAdminPage = () => {
             <div>
               <h1 className="cp-title">Gestión de consultas</h1>
               <p className="cp-subtitle">
-                Revisa los turnos de las mascotas, completa el diagnóstico y
-                guarda la consulta médica de cada atención.
+                Revisa los turnos de las mascotas, completa el diagnóstico y guarda la
+                consulta médica de cada atención.
               </p>
             </div>
 
@@ -181,6 +201,8 @@ const ConsultasAdminPage = () => {
               const fechaStr = t.fecha_turno;
               const horaStr = t.hora_turno?.slice(0, 5) || "";
               const tieneConsulta = t.tiene_consulta;
+              const esCancelada =
+                (t.estado_descripcion || "").toLowerCase() === "cancelada";
 
               const cardClasses =
                 "cp-turno-card " +
@@ -214,13 +236,10 @@ const ConsultasAdminPage = () => {
                   </div>
 
                   <div className="cp-turno-meta">
-                     {/* Solo mostramos el estado (PENDIENTE) si aún no hay consulta */}
-  {!tieneConsulta && (
-    <span className="cp-chip cp-chip-estado">
-      {t.estado_descripcion || "Sin estado"}
-    </span>
-  )}
-
+                    {/* Estado */}
+                    <span className="cp-chip cp-chip-estado">
+                      {t.estado_descripcion || "Sin estado"}
+                    </span>
 
                     <span
                       className={
@@ -241,102 +260,135 @@ const ConsultasAdminPage = () => {
       </main>
 
       {/* MODAL PARA LLENAR / EDITAR CONSULTA */}
-      {isModalOpen && selectedTurno && (
-        <div className="cp-modal-backdrop" onClick={cerrarModalConsulta}>
-          <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="cp-modal-close"
-              onClick={cerrarModalConsulta}
-            >
-              ×
-            </button>
+      {isModalOpen && selectedTurno && (() => {
+        const esCancelada =
+          (selectedTurno.estado_descripcion || "").toLowerCase() === "cancelada";
 
-            <div className="cp-modal-header">
-              <h2 className="cp-modal-title">
-                Consulta de {selectedTurno.mascota_nombre}
-              </h2>
-              <p className="cp-modal-subtitle">
-                Cliente: {selectedTurno.cliente_nombre}{" "}
-                {selectedTurno.cliente_apellido} · Doctor:{" "}
-                {selectedTurno.doctor_nombre} {selectedTurno.doctor_apellido}
-                <br />
-                Turno: {selectedTurno.fecha_turno} ·{" "}
-                {selectedTurno.hora_turno?.slice(0, 5)}
-              </p>
-            </div>
-
-            <div className="cp-modal-body">
-              <div className="cp-form-group">
-                <label className="cp-label" htmlFor="diagnostico_consulta">
-                  Diagnóstico
-                </label>
-                <textarea
-                  id="diagnostico_consulta"
-                  name="diagnostico_consulta"
-                  className="cp-textarea"
-                  value={consultaForm.diagnostico_consulta}
-                  onChange={handleChangeConsulta}
-                  rows={3}
-                />
-              </div>
-
-              <div className="cp-form-group">
-                <label className="cp-label" htmlFor="prescripcion_consulta">
-                  Prescripción
-                </label>
-                <textarea
-                  id="prescripcion_consulta"
-                  name="prescripcion_consulta"
-                  className="cp-textarea"
-                  value={consultaForm.prescripcion_consulta}
-                  onChange={handleChangeConsulta}
-                  rows={3}
-                />
-              </div>
-
-              <div className="cp-form-group">
-                <label className="cp-label" htmlFor="observacion_consulta">
-                  Observaciones
-                </label>
-                <textarea
-                  id="observacion_consulta"
-                  name="observacion_consulta"
-                  className="cp-textarea"
-                  value={consultaForm.observacion_consulta}
-                  onChange={handleChangeConsulta}
-                  rows={3}
-                />
-              </div>
-
-              {consultaError && <p className="cp-error">{consultaError}</p>}
-              {consultaInfo && <p className="cp-info">{consultaInfo}</p>}
-              {loadingConsulta && (
-                <p className="cp-loading">Guardando consulta...</p>
-              )}
-            </div>
-
-            <div className="cp-modal-footer">
+        return (
+          <div className="cp-modal-backdrop" onClick={cerrarModalConsulta}>
+            <div className="cp-modal" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                className="cp-btn cp-btn-outline"
+                className="cp-modal-close"
                 onClick={cerrarModalConsulta}
-                disabled={loadingConsulta}
               >
-                Cancelar
+                ×
               </button>
-              <button
-                type="button"
-                className="cp-btn cp-btn-primary"
-                onClick={guardarConsulta}
-                disabled={loadingConsulta}
-              >
-                Guardar consulta
-              </button>
+
+              <div className="cp-modal-header">
+                <h2 className="cp-modal-title">
+                  Consulta de {selectedTurno.mascota_nombre}
+                </h2>
+                <p className="cp-modal-subtitle">
+                  Cliente: {selectedTurno.cliente_nombre}{" "}
+                  {selectedTurno.cliente_apellido} · Doctor:{" "}
+                  {selectedTurno.doctor_nombre} {selectedTurno.doctor_apellido}
+                  <br />
+                  Turno: {selectedTurno.fecha_turno} ·{" "}
+                  {selectedTurno.hora_turno?.slice(0, 5)}
+                </p>
+              </div>
+
+              <div className="cp-modal-body">
+                {esCancelada && (
+                  <p className="cp-error">
+                    Este turno está cancelado. No se puede registrar consulta.
+                  </p>
+                )}
+
+                <div className="cp-form-group">
+                  <label className="cp-label" htmlFor="diagnostico_consulta">
+                    Diagnóstico
+                  </label>
+                  <textarea
+                    id="diagnostico_consulta"
+                    name="diagnostico_consulta"
+                    className="cp-textarea"
+                    value={consultaForm.diagnostico_consulta}
+                    onChange={handleChangeConsulta}
+                    rows={3}
+                    disabled={esCancelada}
+                  />
+                </div>
+
+                <div className="cp-form-group">
+                  <label className="cp-label" htmlFor="prescripcion_consulta">
+                    Prescripción
+                  </label>
+                  <textarea
+                    id="prescripcion_consulta"
+                    name="prescripcion_consulta"
+                    className="cp-textarea"
+                    value={consultaForm.prescripcion_consulta}
+                    onChange={handleChangeConsulta}
+                    rows={3}
+                    disabled={esCancelada}
+                  />
+                </div>
+
+                <div className="cp-form-group">
+                  <label className="cp-label" htmlFor="observacion_consulta">
+                    Observaciones
+                  </label>
+                  <textarea
+                    id="observacion_consulta"
+                    name="observacion_consulta"
+                    className="cp-textarea"
+                    value={consultaForm.observacion_consulta}
+                    onChange={handleChangeConsulta}
+                    rows={3}
+                    disabled={esCancelada}
+                  />
+                </div>
+
+                {consultaError && <p className="cp-error">{consultaError}</p>}
+                {consultaInfo && <p className="cp-info">{consultaInfo}</p>}
+                {loadingConsulta && (
+                  <p className="cp-loading">Procesando...</p>
+                )}
+              </div>
+
+              <div className="cp-modal-footer">
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-outline"
+                  onClick={cerrarModalConsulta}
+                  disabled={loadingConsulta}
+                >
+                  Cerrar
+                </button>
+
+                {/* ✅ Botón cancelar turno */}
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-outline"
+                  onClick={cancelarTurno}
+                  disabled={loadingConsulta || esCancelada || selectedTurno.tiene_consulta}
+                  title={
+                    selectedTurno.tiene_consulta
+                      ? "No se puede cancelar un turno con consulta registrada"
+                      : esCancelada
+                      ? "Este turno ya está cancelado"
+                      : ""
+                  }
+                >
+                  Cancelar turno
+                </button>
+
+                {/* Guardar consulta */}
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-primary"
+                  onClick={guardarConsulta}
+                  disabled={loadingConsulta || esCancelada}
+                >
+                  Guardar consulta
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <Footer />
     </>

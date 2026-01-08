@@ -33,7 +33,7 @@ const DashboardPage = () => {
     dia: "",
   });
 
-  // Registro mascota (tu parte actual)
+  // Registro mascota
   const [showForm, setShowForm] = useState(false);
   const [nuevaMascota, setNuevaMascota] = useState({
     nombre_mascota: "",
@@ -47,16 +47,17 @@ const DashboardPage = () => {
   const fetchMascotas = async () => {
     try {
       const { data } = await api.get("/mascotas/");
-      setMascotas(data);
+      setMascotas(data || []);
     } catch (error) {
       console.error("Error al obtener mascotas", error);
     }
   };
 
+  // ✅ IMPORTANTE: Traer turnos desde /consultas/turnos/ para que venga tiene_consulta
   const fetchTurnos = async () => {
     try {
-      const { data } = await api.get("/turnos/");
-      setTurnos(data);
+      const { data } = await api.get("/consultas/turnos/");
+      setTurnos(data || []);
     } catch (error) {
       console.error("Error al obtener turnos", error);
     }
@@ -96,6 +97,13 @@ const DashboardPage = () => {
   };
 
   const mascotasResumen = mascotas.slice(0, 3);
+
+  // ✅ Contador: solo turnos pendientes (sin consulta)
+  const turnosPendientes = (turnos || []).filter(
+  (t) =>
+    !t.tiene_consulta &&
+    (t.estado_descripcion || "").toLowerCase() !== "cancelada"
+);
 
   // ===== Helpers para rango de horas =====
   const toRange = (hhmm) => {
@@ -166,11 +174,13 @@ const DashboardPage = () => {
       setSelectedHora("");
 
       try {
-        const { data } = await api.get(`/agenda/disponibilidad/${nuevoTurno.id_doctor}/`, {
-          params: { dia: nuevoTurno.dia },
-        });
+        const { data } = await api.get(
+          `/agenda/disponibilidad/${nuevoTurno.id_doctor}/`,
+          {
+            params: { dia: nuevoTurno.dia },
+          }
+        );
 
-        // data viene como AgendaSerializer -> hora_atencion: "HH:MM:SS"
         const mapped = (data || []).map((a) => ({
           id_agenda: a.id_agenda,
           hora: (a.hora_atencion || a.hora || "").slice(0, 5),
@@ -220,6 +230,7 @@ const DashboardPage = () => {
       });
 
       cerrarTurnoModal();
+      // ✅ recargar turnos (pendientes) desde /consultas/turnos/
       fetchTurnos();
     } catch (err) {
       console.error(err);
@@ -241,9 +252,12 @@ const DashboardPage = () => {
         <section className="dash-container">
           <header className="dash-header">
             <div>
-              <h1 className="dash-title">Hola, {usuario?.nombre || "usuario"} 👋</h1>
+              <h1 className="dash-title">
+                Hola, {usuario?.nombre || "usuario"} 👋
+              </h1>
               <p className="dash-subtitle">
-                Este es tu panel en PozoVet. Aquí puedes ver un resumen de tus mascotas y tus citas.
+                Este es tu panel en PozoVet. Aquí puedes ver un resumen de tus
+                mascotas y tus citas.
               </p>
             </div>
           </header>
@@ -251,13 +265,18 @@ const DashboardPage = () => {
           <section className="dash-cards">
             {/* ✅ Tarjeta de citas */}
             <div className="dash-card">
-              <span className="dash-card-label">Citas agendadas</span>
-              <span className="dash-card-value">{turnos.length}</span>
+              <span className="dash-card-label">Citas pendientes</span>
+              <span className="dash-card-value">{turnosPendientes.length}</span>
               <span className="dash-card-hint">
-                Agenda una cita seleccionando mascota, doctor, fecha y hora disponible.
+                Agenda una cita seleccionando mascota, doctor, fecha y hora
+                disponible.
               </span>
 
-              <button type="button" className="dash-card-btn" onClick={abrirTurnoModal}>
+              <button
+                type="button"
+                className="dash-card-btn"
+                onClick={abrirTurnoModal}
+              >
                 Agendar cita
               </button>
             </div>
@@ -267,7 +286,9 @@ const DashboardPage = () => {
               <span className="dash-card-label">Tus mascotas</span>
 
               {mascotas.length === 0 ? (
-                <span className="dash-card-hint">Aún no has registrado ninguna mascota.</span>
+                <span className="dash-card-hint">
+                  Aún no has registrado ninguna mascota.
+                </span>
               ) : (
                 <>
                   <div className="dash-mascotas-lista">
@@ -277,7 +298,9 @@ const DashboardPage = () => {
                       </span>
                     ))}
                     {mascotas.length > 3 && (
-                      <span className="dash-mascota-mas">+ {mascotas.length - 3} más</span>
+                      <span className="dash-mascota-mas">
+                        + {mascotas.length - 3} más
+                      </span>
                     )}
                   </div>
                   <span className="dash-card-hint">
@@ -295,7 +318,10 @@ const DashboardPage = () => {
               </button>
 
               {showForm && (
-                <form className="dash-mascota-form" onSubmit={handleRegistrarMascota}>
+                <form
+                  className="dash-mascota-form"
+                  onSubmit={handleRegistrarMascota}
+                >
                   <div className="dash-mascota-form-row">
                     <input
                       type="text"
@@ -340,7 +366,9 @@ const DashboardPage = () => {
                     />
                   </div>
 
-                  {errorMascota && <p className="dash-mascota-error">{errorMascota}</p>}
+                  {errorMascota && (
+                    <p className="dash-mascota-error">{errorMascota}</p>
+                  )}
 
                   <button type="submit" className="dash-mascota-submit">
                     Guardar mascota
@@ -415,7 +443,9 @@ const DashboardPage = () => {
                 disabled={loadingDoctores}
               >
                 <option value="">
-                  {loadingDoctores ? "Cargando doctores..." : "Selecciona un doctor"}
+                  {loadingDoctores
+                    ? "Cargando doctores..."
+                    : "Selecciona un doctor"}
                 </option>
                 {doctores.map((d) => (
                   <option key={d.id_usuario} value={d.id_usuario}>
@@ -431,13 +461,16 @@ const DashboardPage = () => {
                 value={nuevoTurno.dia}
                 onChange={handleTurnoChange}
                 required
+                min={new Date().toISOString().split("T")[0]}
               />
 
               {/* Horas */}
               <div className="dash-hours-box">
                 <p className="dash-hours-title">Horas disponibles</p>
 
-                {loadingSlots && <p className="dash-hours-loading">Cargando horas...</p>}
+                {loadingSlots && (
+                  <p className="dash-hours-loading">Cargando horas...</p>
+                )}
 
                 {!loadingSlots &&
                   slots.length === 0 &&
@@ -458,7 +491,9 @@ const DashboardPage = () => {
                         <button
                           key={s.id_agenda}
                           type="button"
-                          className={`dash-hour-pill ${isActive ? "active" : ""}`}
+                          className={`dash-hour-pill ${
+                            isActive ? "active" : ""
+                          }`}
                           onClick={() => {
                             setSelectedAgendaId(s.id_agenda);
                             setSelectedHora(s.hora);
