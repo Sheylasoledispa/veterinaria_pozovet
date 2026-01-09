@@ -13,6 +13,9 @@ const ConsultasAdminPage = () => {
   const [selectedTurno, setSelectedTurno] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Nuevo estado para el modal de confirmación de cancelar turno
+  const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
+
   const [consultaForm, setConsultaForm] = useState({
     diagnostico_consulta: "",
     prescripcion_consulta: "",
@@ -128,9 +131,10 @@ const ConsultasAdminPage = () => {
   const cancelarTurno = async () => {
     if (!selectedTurno) return;
 
-    const ok = window.confirm("¿Seguro que quieres cancelar este turno?");
-    if (!ok) return;
+    setIsConfirmCancelOpen(true); // Abrir el modal de confirmación
+  };
 
+  const confirmCancelTurno = async () => {
     try {
       setLoadingConsulta(true);
       setConsultaError("");
@@ -150,7 +154,12 @@ const ConsultasAdminPage = () => {
       setConsultaError(err?.response?.data?.error || "No se pudo cancelar el turno.");
     } finally {
       setLoadingConsulta(false);
+      setIsConfirmCancelOpen(false); // Cerrar el modal de confirmación
     }
+  };
+
+  const cancelarConfirmacion = () => {
+    setIsConfirmCancelOpen(false); // Cerrar el modal de confirmación
   };
 
   const tituloTurnos = `Turnos registrados · ${turnos.length} turno${
@@ -258,6 +267,23 @@ const ConsultasAdminPage = () => {
           </div>
         </section>
       </main>
+
+      {/* Modal de confirmación de cancelar turno */}
+      {isConfirmCancelOpen && (
+        <div className="confirm-modal">
+          <div className="confirm-modal-content">
+            <h2>¿Estás seguro de que quieres cancelar este turno?</h2>
+            <div className="confirm-modal-actions">
+              <button onClick={confirmCancelTurno} className="confirm-btn">
+                Confirmar
+              </button>
+              <button onClick={cancelarConfirmacion} className="cancel-btn">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL PARA LLENAR / EDITAR CONSULTA */}
       {isModalOpen && selectedTurno && (() => {

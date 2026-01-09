@@ -99,7 +99,7 @@ def turnos_list_create(request):
                 usuario=request.user,
                 realizado_por=request.user,
                 tipo="turno_creado",
-                detalle=f"Se agendó un turno con el doctor ID {agenda.id_usuario_id} para la mascota ID {turno.id_mascota_id} el {turno.fecha_turno} a las {turno.hora_turno}."
+                detalle=f"Se agendó un turno con el doctor {agenda.id_usuario.nombre} {agenda.id_usuario.apellido} para la mascota {turno.id_mascota.nombre_mascota} - {turno.id_mascota.especie} a la fecha {turno.fecha_turno} a las {turno.hora_turno}."
             )
 
             return Response(TurnoSerializer(turno).data, status=status.HTTP_201_CREATED)
@@ -183,7 +183,7 @@ def cancelar_turno(request, id_turno):
         usuario=turno.id_usuario,
         realizado_por=request.user,
         tipo="turno_cancelado",
-        detalle=f"Se canceló el turno ID {turno.id_turno} del {turno.fecha_turno} a las {turno.hora_turno}."
+        detalle=f"Se canceló el turno del {turno.fecha_turno} a las {turno.hora_turno}."
     )
 
     return Response(
