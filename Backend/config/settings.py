@@ -30,7 +30,9 @@ DEBUG = True
 ALLOWED_HOSTS = [ 
     'localhost',
     '127.0.0.1',
-    '159.89.141.4',  # IP pública de mi servidor (ubuntu server)
+    '159.89.141.4',
+    "pozovet.duckdns.org",  # IP pública de mi servidor (ubuntu server)
+    
 ]
 
 
