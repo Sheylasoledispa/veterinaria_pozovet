@@ -27,7 +27,12 @@ SECRET_KEY = 'django-insecure-8o3r2^gq#30lnn0-wss4fp!82va_!814ehmwjdus1&4natpgq3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.3.165',
+    '179.49.63.60',  # IP pública de mi servidor virtualbox(ubuntu server)
+]
 
 
 # Application definition
