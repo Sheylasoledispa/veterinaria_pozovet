@@ -13,6 +13,8 @@ const UserAdminPage = () => {
   // Usuario seleccionado y modal de detalle
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userEspecialidades, setUserEspecialidades] = useState([]);
+
 
   // NUEVO: estado para historial global
   const [isGlobalHistoryOpen, setIsGlobalHistoryOpen] = useState(false);
@@ -91,11 +93,61 @@ const [savingEspecialidad, setSavingEspecialidad] = useState(false);
     }
   };
 
-  const cargarEspecialidades = async () => {
+const eliminarActividad = async () => {
+  if (especialidadesSeleccionadas.length === 0) return;
+
+  if (!window.confirm("¿Eliminar esta actividad definitivamente?")) return;
+
+  try {
+    await api.delete(
+      `/actividades/${especialidadesSeleccionadas[0]}/`
+    );
+
+    setEspecialidadesSeleccionadas([]);
+    await cargarActividades();
+  } catch (err) {
+    console.error(err);
+    setEspecialidadError("No se pudo eliminar la actividad.");
+  }
+};
+
+
+const crearActividad = async () => {
+  if (!nuevaEspecialidad.trim()) return;
+
+  setSavingEspecialidad(true);
+  try {
+    await api.post("/actividades/", {
+      nombre: nuevaEspecialidad,
+      descripcion: "",
+    });
+
+    await cargarActividades();
+    setNuevaEspecialidad("");
+  } catch (err) {
+    console.error(err);
+    setEspecialidadError("No se pudo crear la actividad.");
+  } finally {
+    setSavingEspecialidad(false);
+  }
+};
+
+
+const cargarEspecialidadesDeUsuario = async (idUsuario) => {
+  try {
+    const res = await api.get(`/doctores/${idUsuario}/actividades/`);
+    setUserEspecialidades(res.data);
+  } catch (err) {
+    console.error(err);
+    setUserEspecialidades([]);
+  }
+};
+
+const cargarActividades = async () => {
   setLoadingEspecialidades(true);
   try {
-    const res = await api.get("/especialidades/");
-    setEspecialidades(res.data);
+    const res = await api.get("/actividades/");
+    setEspecialidades(res.data); // puedes mantener el nombre si quieres
   } catch (err) {
     console.error(err);
   } finally {
@@ -104,14 +156,31 @@ const [savingEspecialidad, setSavingEspecialidad] = useState(false);
 };
 
 
+
 const abrirEspecialidadModal = async (usuario) => {
   setSelectedUser(usuario);
-  setEspecialidadesSeleccionadas(usuario.especialidades || []);
-  setNuevaEspecialidad("");
   setEspecialidadError("");
+  setNuevaEspecialidad("");
   setIsEspecialidadModalOpen(true);
-  await cargarEspecialidades();
+
+  await cargarActividades();
+
+  // 🔥 Cargar actividades reales del usuario
+  try {
+    const res = await api.get(
+      `/doctores/${usuario.id_usuario}/actividades/`
+    );
+
+    setEspecialidadesSeleccionadas(
+      res.data.map((a) => a.id_actividad)
+    );
+  } catch (err) {
+    console.error(err);
+    setEspecialidadesSeleccionadas([]);
+  }
 };
+
+
 
 
 const cerrarEspecialidadModal = () => {
@@ -134,37 +203,21 @@ const guardarEspecialidades = async () => {
   if (!selectedUser) return;
 
   try {
-    await api.post(`/usuarios/${selectedUser.id_usuario}/especialidades/`, {
-      especialidades: especialidadesSeleccionadas,
-    });
+    await api.post(
+      `/doctores/${selectedUser.id_usuario}/asignar-actividad/`,
+      {
+        actividades: especialidadesSeleccionadas,
+      }
+    );
 
     cerrarEspecialidadModal();
   } catch (err) {
     console.error(err);
-    setEspecialidadError("No se pudieron guardar las especialidades.");
+    setEspecialidadError("No se pudieron guardar las actividades.");
   }
 };
 
 
-const crearEspecialidad = async () => {
-  if (!nuevaEspecialidad.trim()) return;
-
-  setSavingEspecialidad(true);
-  try {
-    const res = await api.post("/especialidades/", {
-      nombre: nuevaEspecialidad,
-    });
-
-    setEspecialidades((prev) => [...prev, res.data]);
-    setEspecialidadesSeleccionadas((prev) => [...prev, res.data.id]);
-    setNuevaEspecialidad("");
-  } catch (err) {
-    console.error(err);
-    setEspecialidadError("No se pudo crear la especialidad.");
-  } finally {
-    setSavingEspecialidad(false);
-  }
-};
 
 
   // ✅ NUEVO: cargar mascotas del usuario seleccionado
@@ -187,13 +240,13 @@ const crearEspecialidad = async () => {
   };
 
   // Abrir y cerrar modal de detalle
-  const abrirModalUsuario = (usuario) => {
-    setSelectedUser(usuario);
-    setIsModalOpen(true);
+ const abrirModalUsuario = (usuario) => {
+  setSelectedUser(usuario);
+  setIsModalOpen(true);
 
-    // ✅ NUEVO: cargar mascotas del usuario al abrir modal
-    cargarMascotasDeUsuario(usuario.id_usuario);
-  };
+  cargarMascotasDeUsuario(usuario.id_usuario);
+  cargarEspecialidadesDeUsuario(usuario.id_usuario); // 🔥 ESTA LÍNEA
+};
 
   const cerrarModalUsuario = () => {
     setIsModalOpen(false);
@@ -512,6 +565,16 @@ const crearEspecialidad = async () => {
                 <span className="ua-modal-label">ID usuario:</span>
                 <span className="ua-modal-value">{selectedUser.id_usuario}</span>
               </div>
+              <div className="ua-modal-row">
+  <span className="ua-modal-label">Especialidades:</span>
+  <span className="ua-modal-value">
+    {userEspecialidades.length > 0
+      ? userEspecialidades.map(e => e.nombre).join(", ")
+      : "No asignadas"}
+  </span>
+</div>
+
+              
 
               {/* ✅ CAMBIO FINAL: mascotas con separación + pegadas al título + scroll interno */}
               <div className="ua-modal-divider" />
@@ -772,18 +835,34 @@ const crearEspecialidad = async () => {
 
         {!loadingEspecialidades && (
           <>
-            <div className="ua-checkbox-list">
-              {especialidades.map((e) => (
-                <label key={e.id} className="ua-checkbox-item">
-                  <input
-                    type="checkbox"
-                        checked={especialidadesSeleccionadas.includes(e.id_especialidad)}
-    onChange={() => toggleEspecialidad(e.id_especialidad)}
-                  />
-                  {e.nombre}
-                </label>
-              ))}
-            </div>
+<div className="ua-select-group">
+  <label>Especialidad</label>
+
+<div className="ua-checkbox-group">
+  {especialidades.map((a) => (
+    <label key={a.id_actividad} className="ua-checkbox">
+      <input
+        type="checkbox"
+        checked={especialidadesSeleccionadas.includes(a.id_actividad)}
+        onChange={() => {
+          setEspecialidadesSeleccionadas((prev) =>
+            prev.includes(a.id_actividad)
+              ? prev.filter((id) => id !== a.id_actividad)
+              : [...prev, a.id_actividad]
+          );
+        }}
+      />
+      {a.nombre}
+    </label>
+  ))}
+</div>
+
+
+
+
+
+</div>
+
 
             <div className="ua-modal-divider" />
 
@@ -795,13 +874,24 @@ const crearEspecialidad = async () => {
               placeholder="Ej: Vacunación"
             />
 
-            <button
-              className="ua-btn-outline"
-              onClick={crearEspecialidad}
-              disabled={savingEspecialidad}
-            >
-              {savingEspecialidad ? "Creando..." : "Crear"}
-            </button>
+<div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+  <button
+    className="ua-btn-outline"
+    onClick={crearActividad}
+    disabled={savingEspecialidad}
+  >
+    {savingEspecialidad ? "Creando..." : "Crear"}
+  </button>
+
+  <button
+    className="ua-btn-danger"
+    onClick={eliminarActividad}
+    disabled={especialidadesSeleccionadas.length === 0}
+  >
+    Eliminar
+  </button>
+</div>
+
 
             {especialidadError && (
               <p className="ua-error">{especialidadError}</p>
@@ -821,8 +911,6 @@ const crearEspecialidad = async () => {
     </div>
   </div>
 )}
-
-
       <Footer />
     </>
   );

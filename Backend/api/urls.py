@@ -21,7 +21,8 @@ from .controllers.turno_controller import cancelar_turno
 from api.controllers.actividad_controller import (
     actividades_view,
     asignar_actividad,
-    actividades_por_doctor
+    actividades_por_doctor,
+    eliminar_actividad_view
 )
 
 
@@ -81,5 +82,7 @@ urlpatterns = [
    path("actividades/", actividades_view),
    path("doctores/<int:id_doctor>/actividades/", actividades_por_doctor),
    path("doctores/<int:id_doctor>/asignar-actividad/", asignar_actividad),
+   path("actividades/<int:id_actividad>/", eliminar_actividad_view),
+
 
 ]

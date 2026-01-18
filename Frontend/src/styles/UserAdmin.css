@@ -514,3 +514,148 @@
 }
 
 
+/* ===== Select & Input modernos ===== */
+
+.ua-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.ua-select-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.ua-select-group select,
+.ua-modal-body input[type="text"] {
+  appearance: none;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  font-size: 14px;
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+/* Focus bonito */
+.ua-select-group select:focus,
+.ua-modal-body input[type="text"]:focus {
+  outline: none;
+  border-color: #7c3aed; /* morado */
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+/* Hover */
+.ua-select-group select:hover,
+.ua-modal-body input[type="text"]:hover {
+  border-color: #a78bfa;
+}
+
+/* Placeholder */
+.ua-modal-body input::placeholder {
+  color: #9ca3af;
+}
+
+/* Divider */
+.ua-modal-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+/* Estilos para actividades */
+
+.ua-actividades-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ua-actividad-chip {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0369a1;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #7dd3fc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.ua-actividad-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ua-actividad-icon {
+  font-size: 12px;
+}
+
+/* Mensaje informativo (no es error realmente) */
+.ua-info {
+  background-color: #f0f9ff;
+  border: 1px solid #7dd3fc;
+  color: #0369a1;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Mejorar el select de actividades */
+.ua-select-group {
+  margin-bottom: 24px;
+}
+
+.ua-select-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.ua-select-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.ua-select-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ua-select-group select:disabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.ua-checkbox {
+  display: flex;
+  align-items: center;
+  font-weight: 400;     /* ❌ sin negrita */
+  font-size: 16px;      /* texto un poco más grande */
+  cursor: pointer;
+}
+
+.ua-checkbox input[type="checkbox"] {
+  margin-right: 16px;  /* 🔥 MÁS separación del texto */
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
