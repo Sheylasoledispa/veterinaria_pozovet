@@ -1,0 +1,319 @@
+/* Frontend/src/styles/Store.css */
+:root{
+  --pozovet-purple:#9b1c8f;
+  --pozovet-magenta:#d81b60;
+  --pozovet-teal:#00bcd4;
+  --pozovet-dark:#3a213d;
+  --pozovet-bg:#f8f3fb;
+
+  --store-border: rgba(155, 28, 143, 0.14);
+  --store-shadow: 0 14px 34px rgba(69, 39, 160, 0.14);
+}
+
+/* Fondo general */
+.store-root{
+  min-height: 100vh;
+  display:flex;
+  flex-direction:column;
+  background: radial-gradient(circle at top, #ffffff 0, var(--pozovet-bg) 55%, #ecd9f5);
+}
+
+/* Contenido */
+.store-main{
+  flex: 1;
+}
+
+.store-container{
+  max-width: 1100px;
+  margin: 1.4rem auto 2.2rem;
+  padding: 0 1.4rem;
+}
+
+/* Header */
+.store-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.store-title{
+  margin:0;
+  font-size:1.85rem;
+  color: var(--pozovet-dark);
+  letter-spacing: .2px;
+}
+
+.store-subtitle{
+  margin: .25rem 0 0;
+  font-size: .92rem;
+  color:#6f5979;
+}
+
+/* Filtros */
+.store-filters{
+  display:flex;
+  gap: .7rem;
+  flex-wrap:wrap;
+  align-items:center;
+
+  padding: .9rem;
+  border-radius: 18px;
+  border: 1px solid var(--store-border);
+  background: rgba(255,255,255,.75);
+  box-shadow: var(--store-shadow);
+  margin-bottom: 1rem;
+}
+
+/* Input / Select */
+.store-input,
+.store-select{
+  border-radius: 999px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  padding: .55rem .95rem;
+  font-size: .92rem;
+  outline:none;
+  background: rgba(250,247,255,.95);
+  transition: .15s ease;
+  min-height: 40px;
+}
+
+.store-input{
+  flex: 1 1 280px;
+}
+
+.store-select{
+  flex: 0 1 260px;
+  cursor:pointer;
+}
+
+.store-input:focus,
+.store-select:focus{
+  border-color: var(--pozovet-magenta);
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.18);
+  background:#fff;
+}
+
+/* Mensajes */
+.store-info{
+  margin: .4rem 0 .9rem;
+  color:#6f5979;
+  font-size:.92rem;
+}
+
+.store-error{
+  margin: .4rem 0 .9rem;
+  color:#ff4d4f;
+  font-size:.92rem;
+  font-weight:700;
+}
+
+/* Grid de productos */
+.store-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+  margin-top: .2rem;
+}
+
+/* Card */
+.store-card{
+  border-radius: 18px;
+  background:#fff;
+  border: 1px solid var(--store-border);
+  box-shadow: var(--store-shadow);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  transition: .15s ease;
+}
+
+.store-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 44px rgba(69, 39, 160, 0.18);
+}
+
+/* Imagen */
+.store-imgwrap{
+  width:100%;
+  height: 170px;
+  background: linear-gradient(
+    135deg,
+    rgba(155, 28, 143, 0.10),
+    rgba(0, 188, 212, 0.10)
+  );
+}
+
+.store-imgwrap img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* Body */
+.store-card-body{
+  padding: .95rem .95rem 1rem;
+  display:flex;
+  flex-direction:column;
+  gap: .45rem;
+}
+
+.store-card-title{
+  margin:0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--pozovet-dark);
+}
+
+.store-card-cat{
+  margin:0;
+  font-size:.78rem;
+  font-weight:800;
+  letter-spacing:.03em;
+  text-transform: uppercase;
+  color: #7a6186;
+}
+
+/* Descripción (controla altura para que todas queden parejitas) */
+.store-card-desc{
+  margin:0;
+  font-size:.88rem;
+  color:#6f5979;
+  line-height: 1.25rem;
+  min-height: 2.5rem;
+}
+
+/* Footer de card: precio + badge */
+.store-card-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.6rem;
+  margin-top: .15rem;
+}
+
+.store-price{
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--pozovet-purple);
+}
+
+/* Badge de estado */
+.store-badge{
+  font-size: .78rem;
+  font-weight: 900;
+  padding: .18rem .65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 188, 212, 0.22);
+  background: rgba(0, 188, 212, 0.12);
+  color: #006b7a;
+}
+
+/* Si quieres “Pendiente / No disponible” más fuerte */
+.store-badge.no{
+  border-color: rgba(255, 90, 90, .35);
+  background: rgba(255, 90, 90, .12);
+  color:#7a1f1f;
+}
+
+/* Responsive */
+@media (max-width: 640px){
+  .store-title{ font-size: 1.55rem; }
+  .store-filters{ padding: .8rem; }
+  .store-imgwrap{ height: 155px; }
+}
+
+
+/* Botón admin */
+.store-admin-btn{
+  border: none;
+  border-radius: 999px;
+  padding: .45rem 1.05rem;
+  font-weight: 900;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pozovet-purple), var(--pozovet-magenta));
+  box-shadow: 0 10px 22px rgba(155, 28, 143, 0.35);
+  transition: .15s ease;
+}
+.store-admin-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+
+/* Modal */
+.store-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(20,10,25,.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.store-modal{
+  width: 100%;
+  max-width: 760px;
+  border-radius: 26px;
+  padding: 22px;
+  background: radial-gradient(circle at top, #ffffff 0, var(--pozovet-bg) 55%, #ecd9f5);
+  border: 1px solid rgba(155, 28, 143, 0.14);
+  box-shadow: 0 24px 70px rgba(58, 33, 61, 0.35);
+}
+
+.store-modal-title{
+  margin: 0 0 14px;
+  font-size: 1.45rem;
+  color: var(--pozovet-dark);
+  font-weight: 900;
+}
+
+.store-form{ display:flex; flex-direction:column; gap: .7rem; }
+.store-form-row{ display:flex; gap: .6rem; flex-wrap:wrap; }
+.store-form-row .store-input{ flex: 1 1 220px; }
+
+.store-textarea{
+  border-radius: 18px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  padding: .75rem .95rem;
+  font-size: .92rem;
+  outline:none;
+  background: rgba(250,247,255,.95);
+  transition: .15s ease;
+  resize: vertical;
+}
+.store-textarea:focus{
+  border-color: var(--pozovet-magenta);
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.18);
+  background:#fff;
+}
+
+.store-form-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap: .6rem;
+  margin-top: .2rem;
+}
+
+.store-btn{
+  padding: .42rem 1.05rem;
+  border-radius: 999px;
+  border:none;
+  cursor:pointer;
+  font-weight:900;
+  color:#fff;
+  background: linear-gradient(135deg, var(--pozovet-purple), var(--pozovet-magenta));
+  box-shadow: 0 10px 22px rgba(155, 28, 143, 0.35);
+}
+.store-btn:disabled{ opacity:.7; cursor:not-allowed; }
+
+.store-btn-outline{
+  padding: .42rem 1.05rem;
+  border-radius: 999px;
+  cursor:pointer;
+  font-weight:900;
+  background: rgba(255,255,255,.95);
+  color: var(--pozovet-purple);
+  border: 1px solid rgba(155, 28, 143, 0.4);
+}

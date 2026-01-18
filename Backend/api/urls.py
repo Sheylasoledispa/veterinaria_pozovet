@@ -1,5 +1,5 @@
 from django.urls import path
-from .controllers import estado_controller, rol_controller, usuario_controller, auth_controller,  mascota_controller
+from .controllers import estado_controller, rol_controller, usuario_controller, auth_controller,  mascota_controller, producto_controller
 from .controllers.usuario_controller import usuarios_por_tipo, cambiar_rol
 from api.controllers.usuario_controller import historial_global_usuarios
 from .controllers.mascota_controller import mascotas_admin_create
@@ -44,22 +44,22 @@ urlpatterns = [
     path("estados/", estado_controller.estados_list_create, name="estados_list_create"),
     path("estados/<int:pk>/", estado_controller.estados_detail, name="estados_detail"),
  
-  # MASCOTA
+    # MASCOTA
     path("mascotas/", mascota_controller.mascotas_list_create, name="mascotas_list_create"),
     path("mascotas/<int:pk>/", mascota_controller.mascotas_detail, name="mascotas_detail"),
     path("mascotas/admin-create/", mascotas_admin_create),
     path("mascotas/por-usuario/<int:id_usuario>/", mascotas_por_usuario),
 
     
-  # AUTH
+    # AUTH
     path("login/", auth_controller.login, name="login"),
     path("register/", auth_controller.register, name="register"),
   
-  #TURNOS  
+    #TURNOS  
     path("turnos/", turnos_list_create),
     path("turnos/dia/", turnos_del_dia),
 
-      # AGENDA
+    # AGENDA
     path("agenda/horarios/doctor/<int:id_doctor>/", horarios_doctor_por_dia),
     path("agenda/horarios/doctor/<int:id_doctor>/toggle/", toggle_horario_doctor),
     path("agenda/horarios/doctor/<int:id_doctor>/guardar/", guardar_horarios_doctor),
@@ -73,16 +73,21 @@ urlpatterns = [
     path("agenda/horarios/doctor/<int:id_doctor>/guardar/", guardar_horarios_doctor),
     path("agenda/disponibilidad/<int:doctor_id>/", agenda_disponibilidad_doctor),
 
-  # CONSULTAS
-  path("consultas/turnos/", turnos_para_consulta),
+    # CONSULTAS
+    path("consultas/turnos/", turnos_para_consulta),
     path("consultas/por-turno/<int:id_turno>/", consulta_por_turno),
     path("turnos/<int:id_turno>/cancelar/", cancelar_turno),
 
-   #ACTIVIDADES
-   path("actividades/", actividades_view),
-   path("doctores/<int:id_doctor>/actividades/", actividades_por_doctor),
-   path("doctores/<int:id_doctor>/asignar-actividad/", asignar_actividad),
-   path("actividades/<int:id_actividad>/", eliminar_actividad_view),
-
+    #ACTIVIDADES
+    path("actividades/", actividades_view),
+    path("doctores/<int:id_doctor>/actividades/", actividades_por_doctor),
+    path("doctores/<int:id_doctor>/asignar-actividad/", asignar_actividad),
+    path("actividades/<int:id_actividad>/", eliminar_actividad_view),
+  
+  
+    # PRODUCTOS (TIENDA)
+    path("productos/", producto_controller.productos_list_create),
+    path("productos/admin/", producto_controller.productos_admin_list),
+    path("productos/<int:pk>/", producto_controller.productos_detail),
 
 ]

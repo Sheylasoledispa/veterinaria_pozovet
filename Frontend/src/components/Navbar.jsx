@@ -53,6 +53,10 @@ const Navbar = () => {
                 Inicio
               </Link>
 
+              {usuario && <Link to="/tienda">Tienda</Link>}
+              {usuario?.id_rol?.id_rol === 1 && <Link to="/admin/productos">Productos</Link>}
+
+
               {/*  SOLO ADMIN (id_rol = 1) */}
               {usuario?.id_rol === 1 && (
                 <>

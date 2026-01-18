@@ -147,9 +147,27 @@ class ConsultaSerializer(serializers.ModelSerializer):
 
 
 class ProductoSerializer(serializers.ModelSerializer):
+    id_usuario = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    estado_descripcion = serializers.CharField(
+        source="id_estado.descripcion_estado",
+        read_only=True
+    )
+
+    imagen_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Producto
         fields = "__all__"
+
+    def get_imagen_url(self, obj):
+        request = self.context.get("request")
+        if obj.URL_imagen and hasattr(obj.URL_imagen, "url"):
+            url = obj.URL_imagen.url
+            return request.build_absolute_uri(url) if request else url
+        return ""
+
+
 
 
 class CompraSerializer(serializers.ModelSerializer):

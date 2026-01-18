@@ -226,11 +226,20 @@ class Producto(models.Model):
     descripcion_producto = models.TextField(null=True, blank=True)
     categoria_producto = models.CharField(max_length=50)
     precio_producto = models.DecimalField(max_digits=10, decimal_places=2)
-    URL_imagen = models.CharField(max_length=255, null=True, blank=True)
+    URL_imagen = models.ImageField(upload_to="productos/", null=True, blank=True)
     fecha_creacion_producto = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     fecha_actualizacion_producto = models.DateTimeField(auto_now=True, null=True, blank=True)
     id_usuario_creacion_producto = models.IntegerField(null=True, blank=True)
     id_usuario_actualizacion_producto = models.IntegerField(null=True, blank=True)
+    id_estado = models.ForeignKey(
+        Estado,
+        on_delete=models.PROTECT,
+        db_column="id_estado",
+        related_name="productos",
+        null=True,  # temporal por si ya tienes productos creados
+        blank=True,  
+    )
+    
     id_usuario = models.ForeignKey(
         Usuario,
         on_delete=models.CASCADE,

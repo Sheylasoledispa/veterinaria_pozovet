@@ -8,6 +8,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UserAdminPage from "./pages/UserAdminPage";
 import DoctorSchedulePage from "./pages/DoctorSchedulePage"; // 👈 NUEVO
 import ConsultasAdminPage from "./pages/ConsultasAdminPage";
+import StorePage from "./pages/StorePage";
+import ProductsAdminPage from "./pages/ProductsAdminPage";
 
 
 const App = () => {
@@ -62,12 +64,30 @@ const App = () => {
     </ProtectedRoute>
   }
 />
+<Route
+  path="/tienda"
+  element={
+    <ProtectedRoute>
+      <StorePage />
+    </ProtectedRoute>
+  }
+/>
 
+<Route
+  path="/admin/productos"
+  element={
+    <ProtectedRoute adminOnly={true}>
+      <ProductsAdminPage />
+    </ProtectedRoute>
+  }
+/>
 
       <Route path="*" element={<p>404 - Página no encontrada</p>} />
     </Routes>
   );
 };
+
+
 
 export default App;
 
