@@ -36,6 +36,18 @@ const DashboardPage = () => {
   // Modal mascotas
   const [isMascotaModalOpen, setIsMascotaModalOpen] = useState(false);
 
+  // Historial mascota modal
+  const [isHistorialModalOpen, setIsHistorialModalOpen] = useState(false);
+  const abrirHistorialModal = () => {
+  setIsHistorialModalOpen(true);
+};
+
+const cerrarHistorialModal = () => {
+  setIsHistorialModalOpen(false);
+};
+
+
+
   // Registro mascota
   const [nuevaMascota, setNuevaMascota] = useState({
     nombre_mascota: "",
@@ -127,6 +139,14 @@ const DashboardPage = () => {
       !t.tiene_consulta &&
       (t.estado_descripcion || "").toLowerCase() !== "cancelada"
   );
+
+  const turnosHistorial = [...(turnos || [])]
+  .filter((t) => (t.estado_descripcion || "").toLowerCase() !== "cancelada")
+  .sort((a, b) => {
+    const da = new Date(`${a.fecha_turno}T${(a.hora_turno || "00:00").slice(0,5)}:00`);
+    const db = new Date(`${b.fecha_turno}T${(b.hora_turno || "00:00").slice(0,5)}:00`);
+    return db - da; // más reciente primero
+  });
 
   // ===== Helpers para rango de horas =====
   const toRange = (hhmm) => {
@@ -300,6 +320,14 @@ const DashboardPage = () => {
               >
                 Agendar cita
               </button>
+
+              <button
+  type="button"
+  className="dash-card-btn dash-card-btn-outline"
+  onClick={abrirHistorialModal}
+>
+  Ver mis citas
+</button>
             </div>
 
             {/* Tarjeta mascotas */}
@@ -589,6 +617,59 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
+
+      {isHistorialModalOpen && (
+  <div className="dash-modal-backdrop" onClick={cerrarHistorialModal}>
+    <div className="dash-modal dash-modal-sm" onClick={(e) => e.stopPropagation()}>
+      <h3 className="dash-modal-title">Mis citas (historial)</h3>
+
+      {turnosHistorial.length === 0 ? (
+        <p className="dash-hours-empty">Aún no tienes citas registradas.</p>
+      ) : (
+        <div className="dash-historial-list">
+          {turnosHistorial.map((t) => {
+            const estado = (t.estado_descripcion || "").toLowerCase();
+            const esPendiente = !t.tiene_consulta && estado !== "cancelada";
+
+            return (
+              <div key={t.id_turno} className="dash-historial-item">
+                <div className="dash-historial-main">
+                  <span className="dash-historial-title">
+                    {t.mascota_nombre || "Mascota"} · Dr(a). {t.doctor_nombre || ""}{" "}
+                    {t.doctor_apellido || ""}
+                  </span>
+
+                  <span className="dash-historial-sub">
+                    {t.fecha_turno} · {(t.hora_turno || "").slice(0, 5)}
+                  </span>
+                </div>
+
+                <span
+                  className={`dash-historial-badge ${
+                    esPendiente ? "pending" : "done"
+                  }`}
+                >
+                  {esPendiente ? "Pendiente" : "Atendida"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="dash-form-actions">
+        <button
+          type="button"
+          className="dash-btn dash-btn-outline"
+          onClick={cerrarHistorialModal}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       <Footer />
     </div>

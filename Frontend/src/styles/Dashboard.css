@@ -624,3 +624,100 @@
 .dash-hour-pill.reserved:hover {
   transform: none;
 }
+
+
+/* Botón secundario en tarjeta */
+.dash-card-btn-outline{
+  background: rgba(255,255,255,0.95);
+  color: var(--pozovet-purple);
+  border: 1px solid rgba(155, 28, 143, 0.35);
+  box-shadow: none;
+  margin-left: 0.5rem;
+}
+.dash-card-btn-outline:hover{
+  border-color: rgba(216, 27, 96, 0.55);
+}
+
+/* Lista historial */
+.dash-historial-list{
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.2rem;
+}
+
+.dash-historial-item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(155, 28, 143, 0.16);
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+}
+
+.dash-historial-main{
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dash-historial-title{
+  font-weight: 700;
+  color: #3a213d;
+  font-size: 0.92rem;
+}
+
+.dash-historial-sub{
+  font-size: 0.83rem;
+  color: #6d5477;
+}
+
+/* Etiquetas */
+.dash-historial-badge{
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.dash-historial-badge.pending{
+  background: rgba(216, 27, 96, 0.12);
+  color: #b0124d;
+  border-color: rgba(216, 27, 96, 0.25);
+}
+
+.dash-historial-badge.done{
+  background: rgba(46, 125, 50, 0.14);
+  color: #1b5e20;
+  border-color: rgba(46, 125, 50, 0.28);
+}
+
+/* Modal con altura máxima (para que no crezca infinito) */
+.dash-modal {
+  max-height: 85vh;
+  overflow: hidden; /* el scroll lo hará el contenido */
+}
+
+/* Contenedor scrolleable para el historial */
+.dash-historial-list {
+  max-height: 58vh;          /* ajusta si quieres más/menos */
+  overflow-y: auto;
+  padding-right: 6px;        /* evita que el scroll tape el borde */
+}
+
+/* Scroll bonito (Chrome/Edge) */
+.dash-historial-list::-webkit-scrollbar {
+  width: 8px;
+}
+.dash-historial-list::-webkit-scrollbar-thumb {
+  background: rgba(155, 28, 143, 0.25);
+  border-radius: 999px;
+}
+.dash-historial-list::-webkit-scrollbar-track {
+  background: rgba(155, 28, 143, 0.08);
+  border-radius: 999px;
+}
