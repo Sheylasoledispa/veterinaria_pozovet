@@ -18,7 +18,11 @@ from .controllers.consulta_controller import (
 )
 from .controllers.turno_controller import cancelar_turno
 
-
+from api.controllers.actividad_controller import (
+    actividades_view,
+    asignar_actividad,
+    actividades_por_doctor
+)
 
 
 
@@ -72,5 +76,10 @@ urlpatterns = [
   path("consultas/turnos/", turnos_para_consulta),
     path("consultas/por-turno/<int:id_turno>/", consulta_por_turno),
     path("turnos/<int:id_turno>/cancelar/", cancelar_turno),
+
+   #ACTIVIDADES
+   path("actividades/", actividades_view),
+   path("doctores/<int:id_doctor>/actividades/", actividades_por_doctor),
+   path("doctores/<int:id_doctor>/asignar-actividad/", asignar_actividad),
 
 ]

@@ -295,3 +295,48 @@ class Detalle_compra(models.Model):
 
     def __str__(self):
         return f"Detalle {self.id_detalle}"
+
+
+class Actividad(models.Model):
+    id_actividad = models.AutoField(primary_key=True)
+    nombre_actividad = models.CharField(max_length=100, unique=True)
+    descripcion = models.CharField(max_length=255, null=True, blank=True)
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    id_estado = models.ForeignKey(
+        Estado,
+        on_delete=models.PROTECT,
+        db_column="id_estado",
+        related_name="actividades",
+    )
+
+    class Meta:
+        db_table = "Actividad"
+
+    def __str__(self):
+        return self.nombre_actividad
+
+
+class DoctorActividad(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    doctor = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="actividades_asignadas"
+    )
+
+    actividad = models.ForeignKey(
+        Actividad,
+        on_delete=models.CASCADE,
+        related_name="doctores"
+    )
+
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "Doctor_Actividad"
+        unique_together = ("doctor", "actividad")
+
