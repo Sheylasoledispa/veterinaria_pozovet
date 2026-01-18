@@ -141,11 +141,18 @@ def guardar_horarios_doctor(request, id_doctor):
 
     try:
         dia = date.fromisoformat(dia_str)
+        if dia < date.today():
+            return Response(
+                {"detail": "No se pueden modificar horarios en fechas pasadas."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
     except ValueError:
         return Response(
             {"detail": "Formato de fecha inválido. Usa YYYY-MM-DD."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+        
+        
 
     # Parsear cada "HH:MM" a time
     horas_deseadas = set()

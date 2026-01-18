@@ -38,6 +38,11 @@ const DoctorSchedulePage = () => {
 
   const canShowSchedule = selectedDoctorId && selectedDate;
 
+  // Fecha de hoy en formato "YYYY-MM-DD"
+  const hoyStr = new Date().toISOString().split("T")[0];
+const esFechaPasada = Boolean(selectedDate && selectedDate < hoyStr);
+
+
   // 🔹 Cargar doctores (usuarios tipo trabajadores)
   const cargarDoctores = async () => {
     try {
@@ -107,6 +112,12 @@ const DoctorSchedulePage = () => {
   const toggleSlot = (hora) => {
     if (!canShowSchedule || loadingSchedule) return;
 
+    if (esFechaPasada) {
+  setScheduleError("No puedes modificar horarios en una fecha pasada.");
+  setInfoMessage("");
+  return;
+}
+
     setScheduleError("");
     setInfoMessage("");
 
@@ -120,6 +131,12 @@ const DoctorSchedulePage = () => {
   // 🔹 Guardar agenda: ahora sí se envía todo al backend
   const handleGuardarAgenda = async () => {
     if (!canShowSchedule) return;
+
+    if (esFechaPasada) {
+  setScheduleError("No puedes guardar horarios en una fecha que ya pasó.");
+  setInfoMessage("");
+  return;
+}
 
     try {
       setLoadingSchedule(true);
@@ -167,14 +184,15 @@ const DoctorSchedulePage = () => {
               </p>
             </div>
 
-            <button
-              type="button"
-              className="schedule-save-btn"
-              onClick={handleGuardarAgenda}
-              disabled={!canShowSchedule || loadingSchedule}
-            >
-              Guardar agenda
-            </button>
+           <button
+  type="button"
+  className="schedule-save-btn"
+  onClick={handleGuardarAgenda}
+  disabled={!canShowSchedule || loadingSchedule || esFechaPasada}
+  title={esFechaPasada ? "No puedes guardar en fechas pasadas" : ""}
+>
+  Guardar agenda
+</button>
           </div>
 
           {/* Controles: selección de doctor y fecha */}
@@ -208,6 +226,7 @@ const DoctorSchedulePage = () => {
                 className="schedule-input"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
               />
             </div>
           </div>
@@ -215,6 +234,12 @@ const DoctorSchedulePage = () => {
           {/* Mensajes */}
           {scheduleError && <p className="schedule-error">{scheduleError}</p>}
           {infoMessage && <p className="schedule-info">{infoMessage}</p>}
+
+          {esFechaPasada && (
+  <p className="schedule-error">
+    No puedes gestionar horarios en fechas pasadas. Selecciona una fecha desde hoy en adelante.
+  </p>
+)}
 
           {/* Lista vertical de horarios */}
           <div className="schedule-list">
@@ -243,12 +268,14 @@ const DoctorSchedulePage = () => {
                       type="button"
                       className={rowClass}
                       onClick={() => toggleSlot(slot.value)}
-                      disabled={loadingSchedule}
+                      disabled={loadingSchedule || esFechaPasada}
                     >
                       <span className="sched-time">{slot.label}</span>
                       <span className="sched-state">{stateText}</span>
                     </button>
                   );
+
+                  
                 })}
               </div>
             )}

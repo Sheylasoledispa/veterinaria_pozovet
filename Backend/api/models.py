@@ -115,6 +115,7 @@ class Mascota(models.Model):
     especie = models.CharField(max_length=50)
     raza_mascota = models.CharField(max_length=50, null=True, blank=True)
     edad_mascota = models.IntegerField(null=True, blank=True)
+    edad_meses = models.PositiveSmallIntegerField(default=0)
     fecha_creacion_mascota = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     fecha_actualizacion_mascota = models.DateTimeField(auto_now=True, null=True, blank=True)
     id_usuario_creacion_mascota = models.IntegerField(null=True, blank=True)

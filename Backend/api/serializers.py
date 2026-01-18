@@ -54,6 +54,26 @@ class MascotaSerializer(serializers.ModelSerializer):
         model = Mascota
         fields = "__all__"
 
+    def validate_especie(self, value):
+        if value not in ["Perro", "Gato"]:
+            raise serializers.ValidationError("La especie debe ser Perro o Gato.")
+        return value
+
+    def validate_edad_meses(self, value):
+        if value < 0 or value > 11:
+            raise serializers.ValidationError("Los meses deben estar entre 0 y 11.")
+        return value
+
+    def validate_edad_mascota(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Los años no pueden ser negativos.")
+        return value
+def validate_sexo(self, value):
+    if value not in ["Niño", "Niña"]:
+        raise serializers.ValidationError("El sexo debe ser Niño o Niña.")
+    return value
+
+
 
 class AgendaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -172,8 +192,3 @@ class HistorialUsuarioSerializer(serializers.ModelSerializer):
         return None
 
 
-
-class TurnoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Turno
-        fields = "__all__"

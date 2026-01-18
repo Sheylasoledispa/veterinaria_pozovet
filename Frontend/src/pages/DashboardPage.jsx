@@ -21,7 +21,7 @@ const DashboardPage = () => {
   const [doctores, setDoctores] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
 
-  const [slots, setSlots] = useState([]); // [{id_agenda, hora}]
+  const [slots, setSlots] = useState([]); // [{id_agenda, hora, ocupado}]
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [selectedAgendaId, setSelectedAgendaId] = useState(null);
@@ -33,14 +33,17 @@ const DashboardPage = () => {
     dia: "",
   });
 
+  // Modal mascotas
+  const [isMascotaModalOpen, setIsMascotaModalOpen] = useState(false);
+
   // Registro mascota
-  const [showForm, setShowForm] = useState(false);
   const [nuevaMascota, setNuevaMascota] = useState({
     nombre_mascota: "",
     especie: "",
     raza_mascota: "",
     sexo: "",
     edad_mascota: "",
+    edad_meses: "",
   });
   const [errorMascota, setErrorMascota] = useState("");
 
@@ -74,22 +77,42 @@ const DashboardPage = () => {
     setNuevaMascota((prev) => ({ ...prev, [name]: value }));
   };
 
+  const abrirMascotaModal = () => {
+    setErrorMascota("");
+    setNuevaMascota({
+      nombre_mascota: "",
+      especie: "",
+      raza_mascota: "",
+      sexo: "",
+      edad_mascota: "",
+      edad_meses: "",
+    });
+    setIsMascotaModalOpen(true);
+  };
+
+  const cerrarMascotaModal = () => {
+    setIsMascotaModalOpen(false);
+    setErrorMascota("");
+  };
+
   const handleRegistrarMascota = async (e) => {
     e.preventDefault();
     setErrorMascota("");
 
     try {
-      const { data } = await api.post("/mascotas/", nuevaMascota);
-      setMascotas((prev) => [...prev, data]);
+      const payload = {
+        ...nuevaMascota,
+        edad_mascota:
+          nuevaMascota.edad_mascota === ""
+            ? null
+            : Number(nuevaMascota.edad_mascota),
+        edad_meses:
+          nuevaMascota.edad_meses === "" ? 0 : Number(nuevaMascota.edad_meses),
+      };
 
-      setNuevaMascota({
-        nombre_mascota: "",
-        especie: "",
-        raza_mascota: "",
-        sexo: "",
-        edad_mascota: "",
-      });
-      setShowForm(false);
+      const { data } = await api.post("/mascotas/", payload);
+      setMascotas((prev) => [...prev, data]);
+      cerrarMascotaModal();
     } catch (error) {
       console.error("Error al registrar mascota", error);
       setErrorMascota("No se pudo registrar la mascota. Verifica los datos.");
@@ -98,12 +121,12 @@ const DashboardPage = () => {
 
   const mascotasResumen = mascotas.slice(0, 3);
 
-  // ✅ Contador: solo turnos pendientes (sin consulta)
+  // ✅ Contador: solo turnos pendientes (sin consulta) y no cancelados
   const turnosPendientes = (turnos || []).filter(
-  (t) =>
-    !t.tiene_consulta &&
-    (t.estado_descripcion || "").toLowerCase() !== "cancelada"
-);
+    (t) =>
+      !t.tiene_consulta &&
+      (t.estado_descripcion || "").toLowerCase() !== "cancelada"
+  );
 
   // ===== Helpers para rango de horas =====
   const toRange = (hhmm) => {
@@ -156,10 +179,11 @@ const DashboardPage = () => {
     setNuevoTurno((prev) => ({ ...prev, [name]: value }));
   };
 
-  // cuando cambie doctor o fecha -> cargar slots (disponibilidad)
+  // cuando cambie doctor o fecha -> cargar slots (disponibilidad + ocupados)
   useEffect(() => {
     const cargarSlots = async () => {
       if (!isTurnoModalOpen) return;
+
       if (!nuevoTurno.id_doctor || !nuevoTurno.dia) {
         setSlots([]);
         setSelectedAgendaId(null);
@@ -176,19 +200,16 @@ const DashboardPage = () => {
       try {
         const { data } = await api.get(
           `/agenda/disponibilidad/${nuevoTurno.id_doctor}/`,
-          {
-            params: { dia: nuevoTurno.dia },
-          }
+          { params: { dia: nuevoTurno.dia } }
         );
 
-const mapped = (data || []).map((a) => ({
-  id_agenda: a.id_agenda,
-  hora: (a.hora_atencion || a.hora || "").slice(0, 5),
-  ocupado: Boolean(a.ocupado), // 👈 NUEVO
-}));
+        const mapped = (data || []).map((a) => ({
+          id_agenda: a.id_agenda,
+          hora: (a.hora_atencion || a.hora || "").slice(0, 5),
+          ocupado: Boolean(a.ocupado),
+        }));
 
-setSlots(mapped);
-
+        setSlots(mapped);
       } catch (err) {
         console.error(err);
         setTurnoError("No se pudieron cargar las horas disponibles.");
@@ -232,7 +253,6 @@ setSlots(mapped);
       });
 
       cerrarTurnoModal();
-      // ✅ recargar turnos (pendientes) desde /consultas/turnos/
       fetchTurnos();
     } catch (err) {
       console.error(err);
@@ -270,8 +290,7 @@ setSlots(mapped);
               <span className="dash-card-label">Citas pendientes</span>
               <span className="dash-card-value">{turnosPendientes.length}</span>
               <span className="dash-card-hint">
-                Agenda una cita seleccionando mascota, doctor, fecha y hora
-                disponible.
+                Agenda una cita seleccionando mascota, doctor, fecha y hora.
               </span>
 
               <button
@@ -314,69 +333,10 @@ setSlots(mapped);
               <button
                 type="button"
                 className="dash-card-btn"
-                onClick={() => setShowForm((prev) => !prev)}
+                onClick={abrirMascotaModal}
               >
-                {showForm ? "Cerrar formulario" : "Registrar nueva mascota"}
+                Registrar nueva mascota
               </button>
-
-              {showForm && (
-                <form
-                  className="dash-mascota-form"
-                  onSubmit={handleRegistrarMascota}
-                >
-                  <div className="dash-mascota-form-row">
-                    <input
-                      type="text"
-                      name="nombre_mascota"
-                      value={nuevaMascota.nombre_mascota}
-                      onChange={handleChangeMascota}
-                      placeholder="Nombre de la mascota"
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="especie"
-                      value={nuevaMascota.especie}
-                      onChange={handleChangeMascota}
-                      placeholder="Especie (Perro, Gato...)"
-                      required
-                    />
-                  </div>
-
-                  <div className="dash-mascota-form-row">
-                    <input
-                      type="text"
-                      name="raza_mascota"
-                      value={nuevaMascota.raza_mascota}
-                      onChange={handleChangeMascota}
-                      placeholder="Raza"
-                    />
-                    <input
-                      type="text"
-                      name="sexo"
-                      value={nuevaMascota.sexo}
-                      onChange={handleChangeMascota}
-                      placeholder="Sexo"
-                    />
-                    <input
-                      type="number"
-                      name="edad_mascota"
-                      value={nuevaMascota.edad_mascota}
-                      onChange={handleChangeMascota}
-                      placeholder="Edad (años)"
-                      min="0"
-                    />
-                  </div>
-
-                  {errorMascota && (
-                    <p className="dash-mascota-error">{errorMascota}</p>
-                  )}
-
-                  <button type="submit" className="dash-mascota-submit">
-                    Guardar mascota
-                  </button>
-                </form>
-              )}
             </div>
           </section>
 
@@ -393,7 +353,7 @@ setSlots(mapped);
                       <th>Especie</th>
                       <th>Raza</th>
                       <th>Sexo</th>
-                      <th>Edad (años)</th>
+                      <th>Edad</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -403,7 +363,10 @@ setSlots(mapped);
                         <td>{m.especie}</td>
                         <td>{m.raza_mascota}</td>
                         <td>{m.sexo}</td>
-                        <td>{m.edad_mascota}</td>
+                        <td>
+                          {(m.edad_mascota ?? 0)} años
+                          {(m.edad_meses ?? 0) > 0 ? ` ${m.edad_meses} meses` : ""}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -468,7 +431,7 @@ setSlots(mapped);
 
               {/* Horas */}
               <div className="dash-hours-box">
-                <p className="dash-hours-title">Horas disponibles</p>
+                <p className="dash-hours-title">Horas reservadas</p>
 
                 {loadingSlots && (
                   <p className="dash-hours-loading">Cargando horas...</p>
@@ -486,27 +449,28 @@ setSlots(mapped);
                 {!loadingSlots && slots.length > 0 && (
                   <div className="dash-hours-list">
                     {slots.map((s) => {
-  const isActive = Number(selectedAgendaId) === Number(s.id_agenda);
-  const isReserved = s.ocupado;
+                      const isReserved = s.ocupado;
+                      const isActive =
+                        Number(selectedAgendaId) === Number(s.id_agenda);
 
-  return (
-    <button
-      key={s.id_agenda}
-      type="button"
-      className={`dash-hour-pill ${isActive ? "active" : ""} ${
-        isReserved ? "reserved" : ""
-      }`}
-      disabled={isReserved}
-      title={isReserved ? "Ya reservada" : "Disponible"}
-      onClick={() => {
-        if (isReserved) return;
-        setSelectedAgendaId(s.id_agenda);
-        setSelectedHora(s.hora);
-        setTurnoError("");
-      }}
-    >
-      {toRange(s.hora)}
-    </button>
+                      return (
+                        <button
+                          key={s.id_agenda}
+                          type="button"
+                          className={`dash-hour-pill ${
+                            isActive ? "active" : ""
+                          } ${isReserved ? "reserved" : ""}`}
+                          disabled={isReserved}
+                          title={isReserved ? "Cita ya reservada" : "Disponible"}
+                          onClick={() => {
+                            if (isReserved) return;
+                            setSelectedAgendaId(s.id_agenda);
+                            setSelectedHora(s.hora);
+                            setTurnoError("");
+                          }}
+                        >
+                          {toRange(s.hora)}
+                        </button>
                       );
                     })}
                   </div>
@@ -525,6 +489,100 @@ setSlots(mapped);
                 </button>
                 <button type="submit" className="dash-btn" disabled={savingTurno}>
                   {savingTurno ? "Guardando..." : "Guardar cita"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ MODAL: Registrar mascota */}
+      {isMascotaModalOpen && (
+        <div className="dash-modal-backdrop" onClick={cerrarMascotaModal}>
+          <div
+            className="dash-modal dash-modal-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="dash-modal-title">Registrar mascota</h3>
+
+            <form className="dash-form" onSubmit={handleRegistrarMascota}>
+              <div className="dash-form-row">
+                <input
+                  type="text"
+                  name="nombre_mascota"
+                  value={nuevaMascota.nombre_mascota}
+                  onChange={handleChangeMascota}
+                  placeholder="Nombre de la mascota"
+                  required
+                />
+
+                <select
+                  name="especie"
+                  value={nuevaMascota.especie}
+                  onChange={handleChangeMascota}
+                  required
+                >
+                  <option value="">Selecciona especie</option>
+                  <option value="Perro">Perro</option>
+                  <option value="Gato">Gato</option>
+                </select>
+              </div>
+
+              <div className="dash-form-row">
+                <input
+                  type="text"
+                  name="raza_mascota"
+                  value={nuevaMascota.raza_mascota}
+                  onChange={handleChangeMascota}
+                  placeholder="Raza (opcional)"
+                />
+
+                <select
+                  name="sexo"
+                  value={nuevaMascota.sexo}
+                  onChange={handleChangeMascota}
+                  required
+                >
+                  <option value="">Selecciona sexo</option>
+                  <option value="Niño">Niño</option>
+                  <option value="Niña">Niña</option>
+                </select>
+              </div>
+
+              <div className="dash-form-row">
+                <input
+                  type="number"
+                  name="edad_mascota"
+                  value={nuevaMascota.edad_mascota}
+                  onChange={handleChangeMascota}
+                  placeholder="Años"
+                  min="0"
+                />
+
+                <input
+                  type="number"
+                  name="edad_meses"
+                  value={nuevaMascota.edad_meses}
+                  onChange={handleChangeMascota}
+                  placeholder="Meses (0-11)"
+                  min="0"
+                  max="11"
+                />
+              </div>
+
+              {errorMascota && <p className="dash-error">{errorMascota}</p>}
+
+              <div className="dash-form-actions">
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-outline"
+                  onClick={cerrarMascotaModal}
+                >
+                  Cancelar
+                </button>
+
+                <button type="submit" className="dash-btn">
+                  Guardar mascota
                 </button>
               </div>
             </form>
