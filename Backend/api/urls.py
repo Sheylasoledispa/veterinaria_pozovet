@@ -22,7 +22,8 @@ from api.controllers.actividad_controller import (
     actividades_view,
     asignar_actividad,
     actividades_por_doctor,
-    eliminar_actividad_view
+    eliminar_actividad_view,
+    doctores_por_actividad_view
 )
 
 
@@ -83,6 +84,7 @@ urlpatterns = [
     path("doctores/<int:id_doctor>/actividades/", actividades_por_doctor),
     path("doctores/<int:id_doctor>/asignar-actividad/", asignar_actividad),
     path("actividades/<int:id_actividad>/", eliminar_actividad_view),
+    path("actividades/<int:id_actividad>/doctores/", doctores_por_actividad_view),  # GET: Doctores por actividad
   
   
     # PRODUCTOS (TIENDA)

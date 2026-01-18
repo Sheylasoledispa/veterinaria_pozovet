@@ -17,19 +17,23 @@ const DashboardPage = () => {
   const [turnoError, setTurnoError] = useState("");
   const [savingTurno, setSavingTurno] = useState(false);
 
-  // Doctores + disponibilidad
-  const [doctores, setDoctores] = useState([]);
+  // Actividades y doctores
+  const [actividades, setActividades] = useState([]);
+  const [loadingActividades, setLoadingActividades] = useState(false);
+  
+  const [doctoresDisponibles, setDoctoresDisponibles] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
 
-  const [slots, setSlots] = useState([]); // [{id_agenda, hora, ocupado}]
+  const [slots, setSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [selectedAgendaId, setSelectedAgendaId] = useState(null);
   const [selectedHora, setSelectedHora] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
 
   const [nuevoTurno, setNuevoTurno] = useState({
     id_mascota: "",
-    id_doctor: "",
+    id_actividad: "",
     dia: "",
   });
 
@@ -38,15 +42,6 @@ const DashboardPage = () => {
 
   // Historial mascota modal
   const [isHistorialModalOpen, setIsHistorialModalOpen] = useState(false);
-  const abrirHistorialModal = () => {
-  setIsHistorialModalOpen(true);
-};
-
-const cerrarHistorialModal = () => {
-  setIsHistorialModalOpen(false);
-};
-
-
 
   // Registro mascota
   const [nuevaMascota, setNuevaMascota] = useState({
@@ -68,7 +63,6 @@ const cerrarHistorialModal = () => {
     }
   };
 
-  // ✅ IMPORTANTE: Traer turnos desde /consultas/turnos/ para que venga tiene_consulta
   const fetchTurnos = async () => {
     try {
       const { data } = await api.get("/consultas/turnos/");
@@ -145,7 +139,7 @@ const cerrarHistorialModal = () => {
   .sort((a, b) => {
     const da = new Date(`${a.fecha_turno}T${(a.hora_turno || "00:00").slice(0,5)}:00`);
     const db = new Date(`${b.fecha_turno}T${(b.hora_turno || "00:00").slice(0,5)}:00`);
-    return db - da; // más reciente primero
+    return db - da;
   });
 
   // ===== Helpers para rango de horas =====
@@ -162,26 +156,28 @@ const cerrarHistorialModal = () => {
     setTurnoError("");
     setSelectedAgendaId(null);
     setSelectedHora("");
+    setSelectedDoctor(null);
     setSlots([]);
+    setDoctoresDisponibles([]);
 
     setNuevoTurno({
       id_mascota: "",
-      id_doctor: "",
+      id_actividad: "",
       dia: "",
     });
 
     setIsTurnoModalOpen(true);
 
-    // cargar doctores
-    setLoadingDoctores(true);
+    // Cargar actividades
+    setLoadingActividades(true);
     try {
-      const { data } = await api.get("/usuarios/doctores/");
-      setDoctores(data || []);
+      const { data } = await api.get("/actividades/");
+      setActividades(data || []);
     } catch (err) {
       console.error(err);
-      setTurnoError("No se pudieron cargar los doctores.");
+      setTurnoError("No se pudieron cargar las actividades.");
     } finally {
-      setLoadingDoctores(false);
+      setLoadingActividades(false);
     }
   };
 
@@ -190,56 +186,111 @@ const cerrarHistorialModal = () => {
     setTurnoError("");
     setSavingTurno(false);
     setSlots([]);
+    setDoctoresDisponibles([]);
     setSelectedAgendaId(null);
     setSelectedHora("");
+    setSelectedDoctor(null);
   };
 
-  const handleTurnoChange = (e) => {
-    const { name, value } = e.target;
-    setNuevoTurno((prev) => ({ ...prev, [name]: value }));
+  const abrirHistorialModal = () => {
+    setIsHistorialModalOpen(true);
   };
 
-  // cuando cambie doctor o fecha -> cargar slots (disponibilidad + ocupados)
+  const cerrarHistorialModal = () => {
+    setIsHistorialModalOpen(false);
+  };
+
+  // ✅ Manejar cambio en selección de actividad
+  const handleActividadChange = async (e) => {
+    const idActividad = e.target.value;
+    
+    setNuevoTurno((prev) => ({ 
+      ...prev, 
+      id_actividad: idActividad,
+      dia: "" // Resetear fecha cuando cambia actividad
+    }));
+    
+    // Resetear selecciones anteriores
+    setDoctoresDisponibles([]);
+    setSlots([]);
+    setSelectedAgendaId(null);
+    setSelectedHora("");
+    setSelectedDoctor(null);
+    
+    // Cargar doctores para esta actividad
+    if (idActividad) {
+      await cargarDoctoresPorActividad(idActividad);
+    }
+  };
+
+  // ✅ Cargar doctores por actividad
+  const cargarDoctoresPorActividad = async (idActividad) => {
+    if (!idActividad) return;
+    
+    setLoadingDoctores(true);
+    setDoctoresDisponibles([]);
+    
+    try {
+      const { data } = await api.get(`/actividades/${idActividad}/doctores/`);
+      setDoctoresDisponibles(data || []);
+      
+      if (data.length === 0) {
+        setTurnoError("No hay doctores disponibles para esta actividad.");
+      }
+    } catch (err) {
+      console.error(err);
+      setTurnoError("No se pudieron cargar los doctores para esta actividad.");
+    } finally {
+      setLoadingDoctores(false);
+    }
+  };
+
+  // ✅ Manejar selección de doctor
+  const handleSelectDoctor = (doctor) => {
+    setSelectedDoctor(doctor);
+    setSlots([]);
+    setSelectedAgendaId(null);
+    setSelectedHora("");
+    
+    // Si ya hay fecha seleccionada, cargar slots
+    if (nuevoTurno.dia) {
+      cargarSlotsPorDoctor(doctor.id_usuario, nuevoTurno.dia);
+    }
+  };
+
+  // ✅ Cargar slots por doctor y fecha
+  const cargarSlotsPorDoctor = async (idDoctor, dia) => {
+    if (!idDoctor || !dia) return;
+    
+    setLoadingSlots(true);
+    try {
+      const { data } = await api.get(
+        `/agenda/disponibilidad/${idDoctor}/`,
+        { params: { dia } }
+      );
+
+      const mapped = (data || []).map((a) => ({
+        id_agenda: a.id_agenda,
+        hora: (a.hora_atencion || a.hora || "").slice(0, 5),
+        ocupado: Boolean(a.ocupado),
+        id_doctor: idDoctor,
+      }));
+
+      setSlots(mapped);
+    } catch (err) {
+      console.error(err);
+      setTurnoError("No se pudieron cargar las horas disponibles.");
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  // Efecto para cargar slots cuando cambia la fecha
   useEffect(() => {
-    const cargarSlots = async () => {
-      if (!isTurnoModalOpen) return;
-
-      if (!nuevoTurno.id_doctor || !nuevoTurno.dia) {
-        setSlots([]);
-        setSelectedAgendaId(null);
-        setSelectedHora("");
-        return;
-      }
-
-      setLoadingSlots(true);
-      setTurnoError("");
-      setSlots([]);
-      setSelectedAgendaId(null);
-      setSelectedHora("");
-
-      try {
-        const { data } = await api.get(
-          `/agenda/disponibilidad/${nuevoTurno.id_doctor}/`,
-          { params: { dia: nuevoTurno.dia } }
-        );
-
-        const mapped = (data || []).map((a) => ({
-          id_agenda: a.id_agenda,
-          hora: (a.hora_atencion || a.hora || "").slice(0, 5),
-          ocupado: Boolean(a.ocupado),
-        }));
-
-        setSlots(mapped);
-      } catch (err) {
-        console.error(err);
-        setTurnoError("No se pudieron cargar las horas disponibles.");
-      } finally {
-        setLoadingSlots(false);
-      }
-    };
-
-    cargarSlots();
-  }, [isTurnoModalOpen, nuevoTurno.id_doctor, nuevoTurno.dia]);
+    if (selectedDoctor && nuevoTurno.dia) {
+      cargarSlotsPorDoctor(selectedDoctor.id_usuario, nuevoTurno.dia);
+    }
+  }, [nuevoTurno.dia, selectedDoctor]);
 
   // Guardar turno
   const guardarTurno = async (e) => {
@@ -251,7 +302,11 @@ const cerrarHistorialModal = () => {
       setSavingTurno(false);
       return setTurnoError("Selecciona una mascota.");
     }
-    if (!nuevoTurno.id_doctor) {
+    if (!nuevoTurno.id_actividad) {
+      setSavingTurno(false);
+      return setTurnoError("Selecciona una actividad.");
+    }
+    if (!selectedDoctor) {
       setSavingTurno(false);
       return setTurnoError("Selecciona un doctor.");
     }
@@ -310,7 +365,7 @@ const cerrarHistorialModal = () => {
               <span className="dash-card-label">Citas pendientes</span>
               <span className="dash-card-value">{turnosPendientes.length}</span>
               <span className="dash-card-hint">
-                Agenda una cita seleccionando mascota, doctor, fecha y hora.
+                Agenda una cita seleccionando mascota, actividad, doctor, fecha y hora.
               </span>
 
               <button
@@ -322,12 +377,12 @@ const cerrarHistorialModal = () => {
               </button>
 
               <button
-  type="button"
-  className="dash-card-btn dash-card-btn-outline"
-  onClick={abrirHistorialModal}
->
-  Ver mis citas
-</button>
+                type="button"
+                className="dash-card-btn dash-card-btn-outline"
+                onClick={abrirHistorialModal}
+              >
+                Ver mis citas
+              </button>
             </div>
 
             {/* Tarjeta mascotas */}
@@ -412,11 +467,11 @@ const cerrarHistorialModal = () => {
             <h3 className="dash-modal-title">Agendar cita</h3>
 
             <form className="dash-form" onSubmit={guardarTurno}>
-              {/* Mascota */}
+              {/* 1. Mascota */}
               <select
                 name="id_mascota"
                 value={nuevoTurno.id_mascota}
-                onChange={handleTurnoChange}
+                onChange={(e) => setNuevoTurno({...nuevoTurno, id_mascota: e.target.value})}
                 required
               >
                 <option value="">Selecciona una mascota</option>
@@ -427,83 +482,122 @@ const cerrarHistorialModal = () => {
                 ))}
               </select>
 
-              {/* Doctor */}
+              {/* 2. Actividad */}
               <select
-                name="id_doctor"
-                value={nuevoTurno.id_doctor}
-                onChange={handleTurnoChange}
+                name="id_actividad"
+                value={nuevoTurno.id_actividad}
+                onChange={handleActividadChange}
                 required
-                disabled={loadingDoctores}
+                disabled={loadingActividades}
               >
                 <option value="">
-                  {loadingDoctores
-                    ? "Cargando doctores..."
-                    : "Selecciona un doctor"}
+                  {loadingActividades ? "Cargando actividades..." : "Selecciona una actividad"}
                 </option>
-                {doctores.map((d) => (
-                  <option key={d.id_usuario} value={d.id_usuario}>
-                    {d.nombre} {d.apellido}
+                {actividades.map((a) => (
+                  <option key={a.id_actividad} value={a.id_actividad}>
+                    {a.nombre_actividad || a.nombre}
                   </option>
                 ))}
               </select>
 
-              {/* Fecha */}
-              <input
-                type="date"
-                name="dia"
-                value={nuevoTurno.dia}
-                onChange={handleTurnoChange}
-                required
-                min={new Date().toISOString().split("T")[0]}
-              />
-
-              {/* Horas */}
-              <div className="dash-hours-box">
-                <p className="dash-hours-title">Horas reservadas</p>
-
-                {loadingSlots && (
-                  <p className="dash-hours-loading">Cargando horas...</p>
-                )}
-
-                {!loadingSlots &&
-                  slots.length === 0 &&
-                  nuevoTurno.id_doctor &&
-                  nuevoTurno.dia && (
+              {/* 3. Doctores disponibles (solo si hay actividad seleccionada) */}
+              {nuevoTurno.id_actividad && (
+                <div className="dash-doctores-box">
+                  <p className="dash-hours-title">Doctores disponibles</p>
+                  
+                  {loadingDoctores && (
+                    <p className="dash-hours-loading">Cargando doctores...</p>
+                  )}
+                  
+                  {!loadingDoctores && doctoresDisponibles.length === 0 && (
                     <p className="dash-hours-empty">
-                      No hay horarios para ese doctor en esa fecha.
+                      No hay doctores disponibles para esta actividad.
+                    </p>
+                  )}
+                  
+                  {!loadingDoctores && doctoresDisponibles.length > 0 && (
+                    <div className="dash-doctores-list">
+                      {doctoresDisponibles.map((d) => (
+                        <button
+                          key={d.id_usuario}
+                          type="button"
+                          className={`dash-hour-pill ${
+                            selectedDoctor?.id_usuario === d.id_usuario ? "active" : ""
+                          }`}
+                          onClick={() => handleSelectDoctor(d)}
+                        >
+                          Dr. {d.nombre} {d.apellido}
+                          {d.especialidades && d.especialidades.length > 0 && (
+                            <span className="dash-doctor-spec">
+                              · {d.especialidades[0]}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 4. Fecha (solo si hay doctor seleccionado) */}
+              {selectedDoctor && (
+                <input
+                  type="date"
+                  name="dia"
+                  value={nuevoTurno.dia}
+                  onChange={(e) => setNuevoTurno({...nuevoTurno, dia: e.target.value})}
+                  required
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              )}
+
+              {/* 5. Horas disponibles (solo si hay doctor y fecha) */}
+              {selectedDoctor && nuevoTurno.dia && (
+                <div className="dash-hours-box">
+                  <p className="dash-hours-title">
+                    Horas disponibles - Dr. {selectedDoctor.nombre} {selectedDoctor.apellido}
+                  </p>
+
+                  {loadingSlots && (
+                    <p className="dash-hours-loading">Cargando horarios...</p>
+                  )}
+
+                  {!loadingSlots && slots.length === 0 && (
+                    <p className="dash-hours-empty">
+                      No hay horarios disponibles para esta fecha.
                     </p>
                   )}
 
-                {!loadingSlots && slots.length > 0 && (
-                  <div className="dash-hours-list">
-                    {slots.map((s) => {
-                      const isReserved = s.ocupado;
-                      const isActive =
-                        Number(selectedAgendaId) === Number(s.id_agenda);
+                  {!loadingSlots && slots.length > 0 && (
+                    <div className="dash-hours-list">
+                      {slots.map((s) => {
+                        const isReserved = s.ocupado;
+                        const isActive = Number(selectedAgendaId) === Number(s.id_agenda);
 
-                      return (
-                        <button
-                          key={s.id_agenda}
-                          type="button"
-                          className={`dash-hour-pill ${
-                            isActive ? "active" : ""
-                          } ${isReserved ? "reserved" : ""}`}
-                          disabled={isReserved}
-                          title={isReserved ? "Cita ya reservada" : "Disponible"}
-                          onClick={() => {
-                            if (isReserved) return;
-                            setSelectedAgendaId(s.id_agenda);
-                            setSelectedHora(s.hora);
-                            setTurnoError("");
-                          }}
-                        >
-                          {toRange(s.hora)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                        return (
+                          <button
+                            key={s.id_agenda}
+                            type="button"
+                            className={`dash-hour-pill ${
+                              isActive ? "active" : ""
+                            } ${isReserved ? "reserved" : ""}`}
+                            disabled={isReserved}
+                            title={isReserved ? "Cita ya reservada" : "Disponible"}
+                            onClick={() => {
+                              if (isReserved) return;
+                              setSelectedAgendaId(s.id_agenda);
+                              setSelectedHora(s.hora);
+                              setTurnoError("");
+                            }}
+                          >
+                            {toRange(s.hora)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {turnoError && <p className="dash-error">{turnoError}</p>}
 
@@ -515,8 +609,12 @@ const cerrarHistorialModal = () => {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="dash-btn" disabled={savingTurno}>
-                  {savingTurno ? "Guardando..." : "Guardar cita"}
+                <button 
+                  type="submit" 
+                  className="dash-btn" 
+                  disabled={savingTurno || !selectedAgendaId}
+                >
+                  {savingTurno ? "Guardando..." : "Agendar cita"}
                 </button>
               </div>
             </form>
@@ -619,57 +717,56 @@ const cerrarHistorialModal = () => {
       )}
 
       {isHistorialModalOpen && (
-  <div className="dash-modal-backdrop" onClick={cerrarHistorialModal}>
-    <div className="dash-modal dash-modal-sm" onClick={(e) => e.stopPropagation()}>
-      <h3 className="dash-modal-title">Mis citas (historial)</h3>
+        <div className="dash-modal-backdrop" onClick={cerrarHistorialModal}>
+          <div className="dash-modal dash-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <h3 className="dash-modal-title">Mis citas (historial)</h3>
 
-      {turnosHistorial.length === 0 ? (
-        <p className="dash-hours-empty">Aún no tienes citas registradas.</p>
-      ) : (
-        <div className="dash-historial-list">
-          {turnosHistorial.map((t) => {
-            const estado = (t.estado_descripcion || "").toLowerCase();
-            const esPendiente = !t.tiene_consulta && estado !== "cancelada";
+            {turnosHistorial.length === 0 ? (
+              <p className="dash-hours-empty">Aún no tienes citas registradas.</p>
+            ) : (
+              <div className="dash-historial-list">
+                {turnosHistorial.map((t) => {
+                  const estado = (t.estado_descripcion || "").toLowerCase();
+                  const esPendiente = !t.tiene_consulta && estado !== "cancelada";
 
-            return (
-              <div key={t.id_turno} className="dash-historial-item">
-                <div className="dash-historial-main">
-                  <span className="dash-historial-title">
-                    {t.mascota_nombre || "Mascota"} · Dr(a). {t.doctor_nombre || ""}{" "}
-                    {t.doctor_apellido || ""}
-                  </span>
+                  return (
+                    <div key={t.id_turno} className="dash-historial-item">
+                      <div className="dash-historial-main">
+                        <span className="dash-historial-title">
+                          {t.mascota_nombre || "Mascota"} · Dr(a). {t.doctor_nombre || ""}{" "}
+                          {t.doctor_apellido || ""}
+                        </span>
 
-                  <span className="dash-historial-sub">
-                    {t.fecha_turno} · {(t.hora_turno || "").slice(0, 5)}
-                  </span>
-                </div>
+                        <span className="dash-historial-sub">
+                          {t.fecha_turno} · {(t.hora_turno || "").slice(0, 5)}
+                        </span>
+                      </div>
 
-                <span
-                  className={`dash-historial-badge ${
-                    esPendiente ? "pending" : "done"
-                  }`}
-                >
-                  {esPendiente ? "Pendiente" : "Atendida"}
-                </span>
+                      <span
+                        className={`dash-historial-badge ${
+                          esPendiente ? "pending" : "done"
+                        }`}
+                      >
+                        {esPendiente ? "Pendiente" : "Atendida"}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            )}
+
+            <div className="dash-form-actions">
+              <button
+                type="button"
+                className="dash-btn dash-btn-outline"
+                onClick={cerrarHistorialModal}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      <div className="dash-form-actions">
-        <button
-          type="button"
-          className="dash-btn dash-btn-outline"
-          onClick={cerrarHistorialModal}
-        >
-          Cerrar
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
 
       <Footer />
     </div>

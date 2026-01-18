@@ -1,4 +1,4 @@
-from api.models import Actividad, DoctorActividad, Usuario, HistorialUsuario, Estado
+from api.models import Actividad, DoctorActividad, Usuario, HistorialUsuario, Agenda, Estado
 
 def listar_actividades():
     return Actividad.objects.all()
@@ -63,3 +63,38 @@ def eliminar_actividad(id_actividad):
 
 def limpiar_actividades_de_doctor(id_doctor):
     DoctorActividad.objects.filter(doctor_id=id_doctor).delete()
+
+
+def obtener_doctores_por_actividad(id_actividad):
+    """Obtener todos los doctores que tienen una actividad específica"""
+    # Obtener IDs de doctores que tienen esta actividad
+    doctores_ids = DoctorActividad.objects.filter(
+        actividad_id=id_actividad
+    ).values_list('doctor_id', flat=True)
+    
+    # Obtener los usuarios doctores (rol 1)
+    doctores = Usuario.objects.filter(
+        id_usuario__in=doctores_ids,
+        id_rol__id_rol=1  # Solo doctores (rol admin=1)
+    )
+    
+    # Verificar si tienen agenda configurada
+    doctores_con_info = []
+    for doctor in doctores:
+        # Verificar si tiene agendas configuradas
+        tiene_agenda = Agenda.objects.filter(id_usuario=doctor).exists()
+        
+        # Obtener todas las actividades del doctor
+        actividades_doctor = DoctorActividad.objects.filter(doctor=doctor)
+        nombres_actividades = [da.actividad.nombre_actividad for da in actividades_doctor]
+        
+        doctores_con_info.append({
+            'id_usuario': doctor.id_usuario,
+            'nombre': doctor.nombre,
+            'apellido': doctor.apellido,
+            'email': doctor.correo,
+            'tiene_agenda': tiene_agenda,
+            'especialidades': nombres_actividades
+        })
+    
+    return doctores_con_info

@@ -1,13 +1,17 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from api.models import Actividad, DoctorActividad, Usuario, Agenda
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
 
 from api.services.actividad_service import (
     listar_actividades,
     crear_actividad,
     asignar_actividad_a_doctor,
     obtener_actividades_de_doctor,
-    eliminar_actividad
+    eliminar_actividad,
+    obtener_doctores_por_actividad
 )
 
 @api_view(["GET", "POST"])
@@ -88,3 +92,17 @@ def eliminar_actividad_view(request, id_actividad):
         {"message": "Actividad eliminada"},
         status=status.HTTP_200_OK
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def doctores_por_actividad_view(request, id_actividad):
+    """Obtener doctores que tienen una actividad específica"""
+    try:
+        doctores = obtener_doctores_por_actividad(id_actividad)
+        return Response(doctores, status=200)
+    except Exception as e:
+        return Response(
+            {"error": f"No se pudieron obtener los doctores: {str(e)}"},
+            status=400
+        )
