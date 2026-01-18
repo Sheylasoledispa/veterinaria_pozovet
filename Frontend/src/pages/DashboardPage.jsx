@@ -181,12 +181,14 @@ const DashboardPage = () => {
           }
         );
 
-        const mapped = (data || []).map((a) => ({
-          id_agenda: a.id_agenda,
-          hora: (a.hora_atencion || a.hora || "").slice(0, 5),
-        }));
+const mapped = (data || []).map((a) => ({
+  id_agenda: a.id_agenda,
+  hora: (a.hora_atencion || a.hora || "").slice(0, 5),
+  ocupado: Boolean(a.ocupado), // 👈 NUEVO
+}));
 
-        setSlots(mapped);
+setSlots(mapped);
+
       } catch (err) {
         console.error(err);
         setTurnoError("No se pudieron cargar las horas disponibles.");
@@ -484,24 +486,27 @@ const DashboardPage = () => {
                 {!loadingSlots && slots.length > 0 && (
                   <div className="dash-hours-list">
                     {slots.map((s) => {
-                      const isActive =
-                        Number(selectedAgendaId) === Number(s.id_agenda);
+  const isActive = Number(selectedAgendaId) === Number(s.id_agenda);
+  const isReserved = s.ocupado;
 
-                      return (
-                        <button
-                          key={s.id_agenda}
-                          type="button"
-                          className={`dash-hour-pill ${
-                            isActive ? "active" : ""
-                          }`}
-                          onClick={() => {
-                            setSelectedAgendaId(s.id_agenda);
-                            setSelectedHora(s.hora);
-                            setTurnoError("");
-                          }}
-                        >
-                          {toRange(s.hora)}
-                        </button>
+  return (
+    <button
+      key={s.id_agenda}
+      type="button"
+      className={`dash-hour-pill ${isActive ? "active" : ""} ${
+        isReserved ? "reserved" : ""
+      }`}
+      disabled={isReserved}
+      title={isReserved ? "Ya reservada" : "Disponible"}
+      onClick={() => {
+        if (isReserved) return;
+        setSelectedAgendaId(s.id_agenda);
+        setSelectedHora(s.hora);
+        setTurnoError("");
+      }}
+    >
+      {toRange(s.hora)}
+    </button>
                       );
                     })}
                   </div>

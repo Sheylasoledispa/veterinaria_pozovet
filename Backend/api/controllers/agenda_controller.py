@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Exists, OuterRef
 
 
 from ..models import Agenda, Turno, Usuario
@@ -225,7 +226,6 @@ def agenda_disponibilidad_doctor(request, doctor_id):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # validar que el "doctor" exista
     if not Usuario.objects.filter(id_usuario=doctor_id).exists():
         return Response({"detail": "Doctor no encontrado."}, status=404)
 
@@ -234,5 +234,18 @@ def agenda_disponibilidad_doctor(request, doctor_id):
         dia_atencion=dia,
     ).order_by("hora_atencion")
 
+    # ✅ marcar si ya existe un turno en esa agenda y ese día
+    turnos_qs = Turno.objects.filter(
+        id_agenda=OuterRef("pk"),
+        fecha_turno=dia
+    )
+    agendas = agendas.annotate(ocupado=Exists(turnos_qs))
+
     serializer = AgendaSerializer(agendas, many=True)
-    return Response(serializer.data, status=200)
+    data = serializer.data
+
+    # ✅ inyectar el campo ocupado en el JSON final
+    for i, a in enumerate(agendas):
+        data[i]["ocupado"] = bool(a.ocupado)
+
+    return Response(data, status=200)

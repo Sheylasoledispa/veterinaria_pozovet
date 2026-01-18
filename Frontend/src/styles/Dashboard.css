@@ -577,3 +577,15 @@
   color: #1b5e20;
   box-shadow: 0 10px 26px rgba(46, 125, 50, 0.15);
 }
+
+.dash-hour-pill.reserved {
+  background: #ffd6d6;
+  border-color: #ff5a5a;
+  color: #7a1f1f;
+  cursor: not-allowed;
+  opacity: 0.95;
+}
+
+.dash-hour-pill.reserved:hover {
+  transform: none;
+}
