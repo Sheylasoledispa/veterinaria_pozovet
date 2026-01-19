@@ -670,8 +670,8 @@ const DashboardPage = () => {
                   required
                 >
                   <option value="">Selecciona sexo</option>
-                  <option value="Niño">Niño</option>
-                  <option value="Niña">Niña</option>
+                  <option value="Macho">Macho</option>
+                  <option value="Hembra">Hembra</option>
                 </select>
               </div>
 
