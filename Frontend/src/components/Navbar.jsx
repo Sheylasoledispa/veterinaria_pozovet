@@ -30,7 +30,6 @@ const Navbar = () => {
         </div>
 
         <div className="nav-links">
-
           {/* ---- NO LOGEADO ---- */}
           {!isLogged && (
             <>
@@ -53,11 +52,18 @@ const Navbar = () => {
                 Inicio
               </Link>
 
-              {usuario && <Link to="/tienda">Tienda</Link>}
-              {usuario?.id_rol?.id_rol === 1 && <Link to="/admin/productos">Productos</Link>}
+              {/* ✅ SOLO CAMBIO: Tienda con nav-link */}
+              {usuario && (
+                <Link to="/tienda" className="nav-link">
+                  Tienda
+                </Link>
+              )}
 
+              {usuario?.id_rol?.id_rol === 1 && (
+                <Link to="/admin/productos">Productos</Link>
+              )}
 
-              {/*  SOLO ADMIN (id_rol = 1) */}
+              {/* SOLO ADMIN */}
               {usuario?.id_rol === 1 && (
                 <>
                   <Link to="/admin/users" className="nav-link">
@@ -85,7 +91,6 @@ const Navbar = () => {
               </button>
             </>
           )}
-
         </div>
       </nav>
     </header>

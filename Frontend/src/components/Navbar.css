@@ -81,9 +81,7 @@
 }
 
 .nav-title {
-  font-size: 1.35rem;  /* título más grande */
-  font-weight: 700;
-  color: var(--pozovet-green);
+  color: var(--pozovet-purple);
 }
 
 .nav-subtitle {
@@ -165,3 +163,4 @@
     padding-inline: 0.7rem;
   }
 }
+

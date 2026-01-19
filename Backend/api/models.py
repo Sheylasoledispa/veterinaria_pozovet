@@ -246,6 +246,8 @@ class Producto(models.Model):
         db_column="id_usuario",
         related_name="productos",
     )
+    stock_producto = models.PositiveIntegerField(default=0)
+
 
     class Meta:
         db_table = "Producto"

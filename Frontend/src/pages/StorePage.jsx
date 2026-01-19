@@ -31,7 +31,7 @@ const StorePage = () => {
   const [saving, setSaving] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  // ✅ imagen subida desde PC (archivo real)
+  // ✅ imagen subida desde PC (archivo real) - CREAR
   const [imgFile, setImgFile] = useState(null);
   const [imgPreview, setImgPreview] = useState("");
 
@@ -40,8 +40,25 @@ const StorePage = () => {
     descripcion_producto: "",
     categoria_producto: "",
     precio_producto: "",
-    id_estado: "", // Disponible / No disponible (solo estas 2 opciones)
+    id_estado: "",
   });
+
+  // ====== MODAL EDITAR ======
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  const [editProducto, setEditProducto] = useState(null);
+
+  const [editImgFile, setEditImgFile] = useState(null);
+  const [editImgPreview, setEditImgPreview] = useState("");
+  const [editImgCurrent, setEditImgCurrent] = useState("");
+
+  // ====== MODAL ELIMINAR ======
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [productoAEliminar, setProductoAEliminar] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const norm = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
@@ -65,7 +82,6 @@ const StorePage = () => {
     if (!url) return PLACEHOLDER;
     if (String(url).startsWith("http")) return url;
 
-    // Si backend devuelve "/media/..." y tu VITE_API_URL es "http://localhost:8000/api"
     const apiBase = (import.meta?.env?.VITE_API_URL || "").replace(/\/$/, "");
     const root = apiBase ? apiBase.replace(/\/api\/?$/, "") : "";
     if (!root) return url;
@@ -115,8 +131,9 @@ const StorePage = () => {
   useEffect(() => {
     return () => {
       if (imgPreview?.startsWith("blob:")) URL.revokeObjectURL(imgPreview);
+      if (editImgPreview?.startsWith("blob:")) URL.revokeObjectURL(editImgPreview);
     };
-  }, [imgPreview]);
+  }, [imgPreview, editImgPreview]);
 
   const categorias = useMemo(() => {
     const setCats = new Set();
@@ -152,7 +169,6 @@ const StorePage = () => {
       descripcion_producto: "",
       categoria_producto: "",
       precio_producto: "",
-      // id_estado se mantiene (Disponible si existe)
     }));
 
     // reset imagen
@@ -211,7 +227,7 @@ const StorePage = () => {
       return setCreateError("El precio es obligatorio.");
     }
 
-    // ✅ asegurar que el estado sea solo Disponible / No disponible
+    // asegurar solo Disponible / No disponible
     if (nuevoProducto.id_estado) {
       const elegido = estadosDisponibilidad.find(
         (x) => String(x.id_estado) === String(nuevoProducto.id_estado)
@@ -223,32 +239,155 @@ const StorePage = () => {
     }
 
     try {
-        const fd = new FormData();
-        fd.append("nombre_producto", nuevoProducto.nombre_producto.trim());
-        fd.append("categoria_producto", nuevoProducto.categoria_producto.trim());
-        fd.append("precio_producto", String(nuevoProducto.precio_producto).replace(",", "."));
-        fd.append("descripcion_producto", nuevoProducto.descripcion_producto?.trim() || "");
-        if (nuevoProducto.id_estado) fd.append("id_estado", String(nuevoProducto.id_estado));
+      const fd = new FormData();
+      fd.append("nombre_producto", nuevoProducto.nombre_producto.trim());
+      fd.append("categoria_producto", nuevoProducto.categoria_producto.trim());
+      fd.append("precio_producto", String(nuevoProducto.precio_producto).replace(",", "."));
+      fd.append("descripcion_producto", nuevoProducto.descripcion_producto?.trim() || "");
+      if (nuevoProducto.id_estado) fd.append("id_estado", String(nuevoProducto.id_estado));
+      if (imgFile) fd.append("URL_imagen", imgFile);
 
-        // ✅ archivo real
-        if (imgFile) fd.append("URL_imagen", imgFile);
+      await api.post("/productos/", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-        await api.post("/productos/", fd, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-        cerrarCrearProducto();
-        await fetchProductos();
+      cerrarCrearProducto();
+      await fetchProductos();
     } catch (err) {
-        console.error(err);
-        const msg =
+      console.error(err);
+      const msg =
         err?.response?.data?.detail ||
         JSON.stringify(err?.response?.data || {}) ||
         "No se pudo crear el producto. Revisa los campos.";
-        setCreateError(msg);
+      setCreateError(msg);
     } finally {
-        setSaving(false);
+      setSaving(false);
     }
-    };
+  };
+
+  // =========================
+  // Modal editar producto
+  // =========================
+  const abrirEditarProducto = (p) => {
+    setEditError("");
+    setSavingEdit(false);
+
+    setEditProducto({
+      ...p,
+      id_estado: p?.id_estado ? String(p.id_estado) : "",
+    });
+
+    // imagen
+    setEditImgFile(null);
+    if (editImgPreview?.startsWith("blob:")) URL.revokeObjectURL(editImgPreview);
+    setEditImgPreview("");
+    setEditImgCurrent(resolveImg(p.URL_imagen));
+
+    setIsEditOpen(true);
+  };
+
+  const cerrarEditarProducto = () => {
+    setIsEditOpen(false);
+    setSavingEdit(false);
+    setEditError("");
+    setEditProducto(null);
+
+    setEditImgFile(null);
+    if (editImgPreview?.startsWith("blob:")) URL.revokeObjectURL(editImgPreview);
+    setEditImgPreview("");
+    setEditImgCurrent("");
+  };
+
+  const handleEditProductoChange = (e) => {
+    const { name, value } = e.target;
+    setEditProducto((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditImagenChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setEditImgFile(file);
+
+    if (editImgPreview?.startsWith("blob:")) URL.revokeObjectURL(editImgPreview);
+
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setEditImgPreview(previewUrl);
+    } else {
+      setEditImgPreview("");
+    }
+  };
+
+  const actualizarProducto = async (e) => {
+    e.preventDefault();
+    if (!editProducto?.id_producto) return;
+
+    setSavingEdit(true);
+    setEditError("");
+
+    try {
+      const fd = new FormData();
+      fd.append("nombre_producto", (editProducto.nombre_producto || "").trim());
+      fd.append("categoria_producto", (editProducto.categoria_producto || "").trim());
+      fd.append("precio_producto", String(editProducto.precio_producto || "").replace(",", "."));
+      fd.append("descripcion_producto", (editProducto.descripcion_producto || "").trim());
+      if (editProducto.id_estado) fd.append("id_estado", String(editProducto.id_estado));
+
+      if (editImgFile) fd.append("URL_imagen", editImgFile);
+
+      await api.put(`/productos/${editProducto.id_producto}/`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      cerrarEditarProducto();
+      await fetchProductos();
+    } catch (err) {
+      console.error(err);
+      const msg =
+        err?.response?.data?.detail ||
+        JSON.stringify(err?.response?.data || {}) ||
+        "No se pudo actualizar el producto.";
+      setEditError(msg);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  // =========================
+  // Modal eliminar producto
+  // =========================
+  const abrirEliminarProducto = (p) => {
+    setDeleteError("");
+    setProductoAEliminar(p);
+    setIsDeleteOpen(true);
+  };
+
+  const cerrarEliminarProducto = () => {
+    setIsDeleteOpen(false);
+    setProductoAEliminar(null);
+    setDeleting(false);
+    setDeleteError("");
+  };
+
+  const confirmarEliminarProducto = async () => {
+    if (!productoAEliminar?.id_producto) return;
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      await api.delete(`/productos/${productoAEliminar.id_producto}/`);
+      cerrarEliminarProducto();
+      await fetchProductos();
+    } catch (err) {
+      console.error(err);
+      const msg =
+        err?.response?.data?.detail ||
+        JSON.stringify(err?.response?.data || {}) ||
+        "No se pudo eliminar el producto.";
+      setDeleteError(msg);
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="store-root">
@@ -317,12 +456,29 @@ const StorePage = () => {
 
                   <div className="store-card-footer">
                     <span className="store-price">${String(p.precio_producto)}</span>
-
-                    {/* badge más “normal” (tamaño depende del CSS, pero aquí no lo hacemos gigante) */}
                     <span className="store-badge">
                       {formatEstado(p.estado_descripcion || "Disponible")}
                     </span>
                   </div>
+
+                  {isAdmin && (
+                    <div className="store-card-actions">
+                      <button
+                        type="button"
+                        className="store-card-btn"
+                        onClick={() => abrirEditarProducto(p)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="store-card-btn store-card-btn-danger"
+                        onClick={() => abrirEliminarProducto(p)}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </article>
             ))}
@@ -392,30 +548,27 @@ const StorePage = () => {
                 </select>
               </div>
 
-              {/* ✅ Subir imagen desde PC */}
-              <div className="store-form-row" style={{ display: "block" }}>
-                <input
-                  className="store-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImagenChange}
-                />
+              {/* ✅ Subir imagen desde PC (bonito) */}
+              <div className="store-form-row store-file-block">
+                <div className="store-file-row">
+                  <input
+                    id="store_img_create"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImagenChange}
+                    className="store-file-input"
+                  />
+                  <label htmlFor="store_img_create" className="store-file-btn">
+                    Adjuntar imagen
+                  </label>
+                  <span className={`store-file-name ${imgFile ? "" : "empty"}`}>
+                    {imgFile?.name || "Ningún archivo seleccionado"}
+                  </span>
+                </div>
 
                 {imgPreview && (
-                  <div
-                    style={{
-                      marginTop: "0.6rem",
-                      borderRadius: "16px",
-                      overflow: "hidden",
-                      border: "1px solid rgba(155, 28, 143, 0.18)",
-                      background: "rgba(255,255,255,0.7)",
-                    }}
-                  >
-                    <img
-                      src={imgPreview}
-                      alt="Preview"
-                      style={{ width: "100%", height: "180px", objectFit: "cover" }}
-                    />
+                  <div className="store-img-preview">
+                    <img src={imgPreview} alt="Preview" className="store-img-preview-img" />
                   </div>
                 )}
               </div>
@@ -440,6 +593,156 @@ const StorePage = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ MODAL ADMIN: Editar producto */}
+      {isAdmin && isEditOpen && editProducto && (
+        <div className="store-modal-backdrop" onClick={cerrarEditarProducto}>
+          <div className="store-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="store-modal-title">Editar producto</h3>
+
+            <form className="store-form" onSubmit={actualizarProducto}>
+              <div className="store-form-row">
+                <input
+                  className="store-input"
+                  name="nombre_producto"
+                  placeholder="Nombre del producto"
+                  value={editProducto.nombre_producto || ""}
+                  onChange={handleEditProductoChange}
+                  required
+                />
+
+                <input
+                  className="store-input"
+                  name="categoria_producto"
+                  placeholder="Categoría"
+                  value={editProducto.categoria_producto || ""}
+                  onChange={handleEditProductoChange}
+                  required
+                />
+              </div>
+
+              <div className="store-form-row">
+                <input
+                  className="store-input"
+                  type="number"
+                  step="0.01"
+                  name="precio_producto"
+                  placeholder="Precio"
+                  value={editProducto.precio_producto || ""}
+                  onChange={handleEditProductoChange}
+                  required
+                />
+
+                <select
+                  className="store-select"
+                  name="id_estado"
+                  value={editProducto.id_estado || ""}
+                  onChange={handleEditProductoChange}
+                >
+                  <option value="">(Opcional) Disponibilidad</option>
+                  {estadosDisponibilidad.map((e) => (
+                    <option key={e.id_estado} value={e.id_estado}>
+                      {formatEstado(e.descripcion_estado)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* ✅ Cambiar imagen (bonito) */}
+              <div className="store-form-row store-file-block">
+                <div className="store-file-row">
+                  <input
+                    id="store_img_edit"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleEditImagenChange}
+                    className="store-file-input"
+                  />
+                  <label htmlFor="store_img_edit" className="store-file-btn">
+                    Cambiar imagen
+                  </label>
+                  <span className={`store-file-name ${editImgFile ? "" : "empty"}`}>
+                    {editImgFile?.name || "Ningún archivo seleccionado"}
+                  </span>
+                </div>
+
+                {(editImgPreview || editImgCurrent) && (
+                  <div className="store-img-preview">
+                    <img
+                      src={editImgPreview || editImgCurrent}
+                      alt="Preview"
+                      className="store-img-preview-img"
+                      onError={(e) => {
+                        e.currentTarget.src = PLACEHOLDER;
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <textarea
+                className="store-textarea"
+                name="descripcion_producto"
+                placeholder="Descripción (opcional)"
+                value={editProducto.descripcion_producto || ""}
+                onChange={handleEditProductoChange}
+                rows={3}
+              />
+
+              {editError && <p className="store-error">{editError}</p>}
+
+              <div className="store-form-actions">
+                <button type="button" className="store-btn-outline" onClick={cerrarEditarProducto}>
+                  Cancelar
+                </button>
+                <button type="submit" className="store-btn" disabled={savingEdit}>
+                  {savingEdit ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ MODAL PEQUEÑO: Confirmar eliminación */}
+      {isAdmin && isDeleteOpen && (
+        <div className="store-modal-backdrop" onClick={cerrarEliminarProducto}>
+          <div
+            className="store-modal store-modal-sm store-modal-danger"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="store-modal-title">Confirmar eliminación</h3>
+
+            <p className="store-confirm-text">
+              Vas a eliminar el producto{" "}
+              <strong>“{productoAEliminar?.nombre_producto}”</strong>. <br />
+              Esta acción no se puede deshacer.
+            </p>
+
+            {deleteError && <p className="store-error">{deleteError}</p>}
+
+            <div className="store-form-actions">
+              <button
+                type="button"
+                className="store-btn-outline"
+                onClick={cerrarEliminarProducto}
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="store-btn store-btn-danger"
+                onClick={confirmarEliminarProducto}
+                disabled={deleting}
+              >
+                {deleting ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
           </div>
         </div>
       )}

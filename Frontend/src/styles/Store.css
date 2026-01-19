@@ -317,3 +317,237 @@
   color: var(--pozovet-purple);
   border: 1px solid rgba(155, 28, 143, 0.4);
 }
+
+/* ===== File input bonito (PozoVet) ===== */
+.store-file-block {
+  display: block;
+}
+
+.store-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Oculta el input nativo */
+.store-file-input {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* Botón pill con gradiente Pozovet */
+.store-file-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.52rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  border: 1px solid transparent;
+  background: linear-gradient(
+    135deg,
+    var(--pozovet-purple, #9b1c8f),
+    var(--pozovet-magenta, #d81b60)
+  );
+  box-shadow: 0 6px 16px rgba(155, 28, 143, 0.45);
+  transition: 0.15s ease;
+  user-select: none;
+}
+
+.store-file-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.store-file-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.25), 0 6px 16px rgba(155, 28, 143, 0.45);
+}
+
+/* “Ningún archivo…” como pill igual a tus inputs */
+.store-file-name {
+  flex: 1 1 260px;
+  padding: 0.52rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 0.88rem;
+  color: #5b3f7a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.store-file-name.empty {
+  color: #8a7a95;
+}
+
+/* Preview con tu estilo */
+.store-img-preview {
+  margin-top: 0.6rem;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(155, 28, 143, 0.18);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.store-img-preview-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 620px) {
+  .store-file-btn {
+    width: 100%;
+  }
+  .store-file-name {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+}
+
+/* ===== Acciones admin en tarjeta (Editar/Eliminar) ===== */
+.store-card-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.store-action-btn{
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: 0.15s ease;
+}
+
+.store-action-edit{
+  background: rgba(0, 188, 212, 0.12);
+  border: 1px solid rgba(0, 188, 212, 0.35);
+  color: #007a8a;
+}
+
+.store-action-delete{
+  background: rgba(229, 57, 53, 0.12);
+  border: 1px solid rgba(229, 57, 53, 0.35);
+  color: #b71c1c;
+}
+
+.store-action-btn:hover{
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.store-action-btn:active{
+  transform: translateY(0px);
+}
+
+/* ===== Modal pequeño confirmación (Eliminar) ===== */
+.store-modal-sm{
+  max-width: 350px;
+  padding: 18px 18px 14px;
+  border-radius: 22px;
+}
+
+.store-modal-danger{
+  border: 1px solid rgba(229, 57, 53, 0.18);
+}
+
+.store-confirm-text{
+  
+  margin: 0.35rem 0 0.9rem;
+  font-size: 0.92rem;
+  color: #5b3f7a;
+  line-height: 1.35;
+}
+
+/* Botón “Sí, eliminar” con look peligro */
+.store-btn-danger{
+  background: linear-gradient(135deg, #c62828, var(--pozovet-magenta));
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(198, 40, 40, 0.28);
+}
+.store-btn-danger:hover{
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* Centrar texto en el modal de confirmación */
+.store-modal-danger .store-modal-title,
+.store-modal-danger .store-confirm-text,
+.store-modal-danger .store-error{
+  text-align: center;
+}
+
+.store-modal-danger .store-form-actions{
+  justify-content: center;
+}
+
+/* ===== Botones Editar (outline) / Eliminar (gradiente) ===== */
+
+.store-card-actions{
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
+/* EDITAR: outline elegante (encaja con Pozovet) */
+.store-card-btn{
+  border-radius: 999px;
+  padding: 0.42rem 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--pozovet-purple, #9b1c8f);
+  border: 1px solid rgba(155, 28, 143, 0.35);
+  box-shadow: none;
+
+  transition: 0.15s ease;
+}
+
+.store-card-btn:hover{
+  background: rgba(155, 28, 143, 0.06);
+  border-color: rgba(216, 27, 96, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ELIMINAR: gradiente PozoVet (más intenso) */
+.store-card-btn-danger{
+  border: none;
+  border-radius: 999px;
+  padding: 0.42rem 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--pozovet-purple, #9b1c8f),
+    var(--pozovet-magenta, #d81b60)
+  );
+  box-shadow: 0 10px 22px rgba(216, 27, 96, 0.28);
+
+  transition: 0.15s ease;
+}
+
+.store-card-btn-danger:hover{
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
