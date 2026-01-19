@@ -1,4 +1,3 @@
-/* Frontend/src/styles/ProductsAdmin.css */
 :root {
   --pozovet-purple: #9b1c8f;
   --pozovet-magenta: #d81b60;
@@ -180,28 +179,55 @@
   background: rgba(0, 188, 212, 0.06);
 }
 
-.admin-pill {
+/* Badge de stock */
+.admin-stock-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.8rem;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
   border: 1px solid rgba(155, 28, 143, 0.18);
   background: rgba(255, 255, 255, 0.9);
-  color: #5b3f7a;
+  min-width: 50px;
+  justify-content: center;
 }
 
-.admin-pill.ok {
+.admin-stock-badge.in-stock {
   background: rgba(46, 125, 50, 0.12);
   border-color: rgba(46, 125, 50, 0.3);
   color: #1b5e20;
 }
 
-.admin-pill.bad {
+.admin-stock-badge.out-of-stock {
   background: rgba(229, 57, 53, 0.12);
   border-color: rgba(229, 57, 53, 0.35);
+  color: #b71c1c;
+}
+
+/* Badge de disponibilidad */
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-width: 80px;
+  justify-content: center;
+}
+
+.admin-status-badge.available {
+  background: rgba(46, 125, 50, 0.12);
+  border: 1px solid rgba(46, 125, 50, 0.3);
+  color: #1b5e20;
+}
+
+.admin-status-badge.unavailable {
+  background: rgba(229, 57, 53, 0.12);
+  border: 1px solid rgba(229, 57, 53, 0.35);
   color: #b71c1c;
 }
 
@@ -248,4 +274,125 @@
   margin: 0.5rem 0 0;
   font-size: 0.88rem;
   color: #6d5477;
+}
+
+/* Hint para campo de stock */
+.admin-field-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: #6f5979;
+  font-style: italic;
+}
+
+/* Estilos para imagen en tabla */
+.admin-table-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--pozovet-border);
+}
+
+/* ===== MODALES MÁS COMPACTOS Y ESTÉTICOS ===== */
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 10, 25, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+  animation: adminFadeIn 0.2s ease;
+}
+
+@keyframes adminFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--pozovet-bg) 100%);
+  border: 1px solid rgba(155, 28, 143, 0.2);
+  box-shadow: 0 20px 60px rgba(58, 33, 61, 0.4);
+  animation: adminSlideUp 0.3s ease;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@keyframes adminSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-modal-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--pozovet-dark);
+  font-weight: 900;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: var(--pozovet-purple);
+  line-height: 1;
+  padding: 0 4px;
+  border-radius: 50%;
+  transition: 0.15s ease;
+}
+
+.admin-modal-close:hover {
+  background: rgba(155, 28, 143, 0.1);
+  transform: scale(1.1);
+}
+
+.admin-modal-form .admin-input,
+.admin-modal-form .admin-select {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.88rem;
+  border-radius: 12px;
+}
+
+.admin-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(155, 28, 143, 0.1);
+}
+
+/* Responsive para modales */
+@media (max-width: 640px) {
+  .admin-modal {
+    max-width: 95%;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .admin-modal-actions {
+    flex-direction: column;
+  }
+  
+  .admin-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

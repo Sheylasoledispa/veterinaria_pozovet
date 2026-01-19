@@ -1,239 +1,317 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import api from "../api";
 import "../styles/ProductsAdmin.css";
+import api from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const ProductsAdminPage = () => {
   const [productos, setProductos] = useState([]);
-  const [estados, setEstados] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null); // producto o null
-
-  const [form, setForm] = useState({
+  const [showModal, setShowModal] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({
     nombre_producto: "",
     descripcion_producto: "",
     categoria_producto: "",
     precio_producto: "",
-    URL_imagen: "",
-    id_estado: "",
+    URL_imagen: null,
+    stock_producto: 0, // ✅ Único campo para disponibilidad
   });
+  const [previewImage, setPreviewImage] = useState(null);
 
-  const fetchAll = async () => {
+  useEffect(() => {
+    cargarProductos();
+  }, []);
+
+  const cargarProductos = async () => {
     try {
-      setLoading(true);
-      setError("");
-      const [prodsRes, estadosRes] = await Promise.all([
-        api.get("/productos/admin/"),
-        api.get("/estados/"),
-      ]);
-      setProductos(prodsRes.data || []);
-      setEstados(estadosRes.data || []);
-    } catch (e) {
-      console.error(e);
-      setError("No se pudieron cargar productos/estados.");
-    } finally {
-      setLoading(false);
+      const { data } = await api.get("/productos/admin/");
+      setProductos(data);
+    } catch (error) {
+      console.error("Error cargando productos:", error);
     }
   };
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  const handleChange = (e) => {
+    const { name, value, type, files } = e.target;
+    
+    if (type === "file") {
+      const file = files[0];
+      setFormData({ ...formData, URL_imagen: file });
+      setPreviewImage(URL.createObjectURL(file));
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
 
-  const estadoDisponibleId = useMemo(() => {
-    const e = (estados || []).find((x) => (x.descripcion_estado || "").toLowerCase() === "disponible");
-    return e ? e.id_estado : "";
-  }, [estados]);
-
-  const abrirCrear = () => {
-    setEditing(null);
-    setForm({
+  const handleNew = () => {
+    setEditId(null);
+    setFormData({
       nombre_producto: "",
       descripcion_producto: "",
       categoria_producto: "",
       precio_producto: "",
-      URL_imagen: "",
-      id_estado: estadoDisponibleId || "",
+      URL_imagen: null,
+      stock_producto: 0,
     });
-    setIsModalOpen(true);
+    setPreviewImage(null);
+    setShowModal(true);
   };
 
-  const abrirEditar = (p) => {
-    setEditing(p);
-    setForm({
-      nombre_producto: p.nombre_producto || "",
-      descripcion_producto: p.descripcion_producto || "",
-      categoria_producto: p.categoria_producto || "",
-      precio_producto: p.precio_producto ?? "",
-      URL_imagen: p.URL_imagen || "",
-      id_estado: p.id_estado || "",
+  const handleEdit = (producto) => {
+    setEditId(producto.id_producto);
+    setFormData({
+      nombre_producto: producto.nombre_producto,
+      descripcion_producto: producto.descripcion_producto,
+      categoria_producto: producto.categoria_producto,
+      precio_producto: producto.precio_producto,
+      URL_imagen: null,
+      stock_producto: producto.stock_producto,
     });
-    setIsModalOpen(true);
+    setPreviewImage(producto.imagen_url || null);
+    setShowModal(true);
   };
 
-  const cerrarModal = () => {
-    setIsModalOpen(false);
-    setEditing(null);
-  };
-
-  const onChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const guardar = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
     try {
-      setLoading(true);
-      setError("");
-
-      const payload = {
-        ...form,
-        precio_producto: Number(form.precio_producto),
-        id_estado: Number(form.id_estado),
-      };
-
-      if (!payload.id_estado) {
-        setLoading(false);
-        setError("Selecciona un estado (Disponible / No disponible).");
-        return;
+      const data = new FormData();
+      data.append("nombre_producto", formData.nombre_producto);
+      data.append("descripcion_producto", formData.descripcion_producto);
+      data.append("categoria_producto", formData.categoria_producto);
+      data.append("precio_producto", formData.precio_producto);
+      data.append("stock_producto", formData.stock_producto);
+      
+      if (formData.URL_imagen) {
+        data.append("URL_imagen", formData.URL_imagen);
       }
 
-      if (editing) {
-        await api.put(`/productos/${editing.id_producto}/`, payload);
+      if (editId) {
+        await api.put(`/productos/${editId}/`, data);
       } else {
-        await api.post("/productos/", payload);
+        await api.post("/productos/", data);
       }
 
-      await fetchAll();
-      cerrarModal();
-    } catch (e) {
-      console.error(e);
-      setError("No se pudo guardar el producto.");
-    } finally {
-      setLoading(false);
+      cargarProductos();
+      setShowModal(false);
+      setFormData({
+        nombre_producto: "",
+        descripcion_producto: "",
+        categoria_producto: "",
+        precio_producto: "",
+        URL_imagen: null,
+        stock_producto: 0,
+      });
+      setPreviewImage(null);
+    } catch (error) {
+      console.error("Error guardando producto:", error);
+      alert("Error al guardar el producto");
     }
   };
 
-  const eliminar = async (p) => {
-    const ok = confirm(`¿Eliminar "${p.nombre_producto}"?`);
-    if (!ok) return;
-
-    try {
-      setLoading(true);
-      setError("");
-      await api.delete(`/productos/${p.id_producto}/`);
-      await fetchAll();
-    } catch (e) {
-      console.error(e);
-      setError("No se pudo eliminar el producto.");
-    } finally {
-      setLoading(false);
+  const handleDelete = async (id) => {
+    if (window.confirm("¿Estás seguro de eliminar este producto?")) {
+      try {
+        await api.delete(`/productos/${id}/`);
+        cargarProductos();
+      } catch (error) {
+        console.error("Error eliminando producto:", error);
+      }
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setFormData({
+      nombre_producto: "",
+      descripcion_producto: "",
+      categoria_producto: "",
+      precio_producto: "",
+      URL_imagen: null,
+      stock_producto: 0,
+    });
+    setPreviewImage(null);
   };
 
   return (
-    <div className="padmin-root">
+    <div className="products-admin-root">
       <Navbar />
-
-      <main className="padmin-main">
-        <section className="padmin-container">
-          <header className="padmin-header">
-            <div>
-              <h1 className="padmin-title">Productos (Admin)</h1>
-              <p className="padmin-subtitle">Crea, edita, elimina y controla el estado de venta.</p>
-            </div>
-
-            <button className="padmin-btn" onClick={abrirCrear}>
-              + Nuevo producto
+      
+      <main className="products-admin-main">
+        <section className="products-admin-container">
+          <header className="products-admin-header">
+            <h1>Gestión de Productos</h1>
+            <p>Administra los productos disponibles en la tienda</p>
+            <button className="new-btn" onClick={handleNew}>
+              + Nuevo Producto
             </button>
           </header>
 
-          {loading && <p className="padmin-info">Cargando...</p>}
-          {error && <p className="padmin-error">{error}</p>}
-
-          <div className="padmin-tablewrap">
-            <table className="padmin-table">
+          <div className="table-container">
+            <table className="products-table">
               <thead>
                 <tr>
+                  <th>ID</th>
+                  <th>Imagen</th>
                   <th>Nombre</th>
                   <th>Categoría</th>
                   <th>Precio</th>
-                  <th>Estado</th>
+                  <th>Stock</th>
+                  <th>Disponible</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {(productos || []).map((p) => (
-                  <tr key={p.id_producto}>
-                    <td>{p.nombre_producto}</td>
-                    <td>{p.categoria_producto}</td>
-                    <td>${String(p.precio_producto)}</td>
-                    <td>{p.estado_descripcion || "-"}</td>
-                    <td className="padmin-actions">
-                      <button className="padmin-btn-outline" onClick={() => abrirEditar(p)}>Editar</button>
-                      <button className="padmin-btn-danger" onClick={() => eliminar(p)}>Eliminar</button>
+                {productos.map((prod) => (
+                  <tr key={prod.id_producto}>
+                    <td>{prod.id_producto}</td>
+                    <td>
+                      {prod.imagen_url ? (
+                        <img 
+                          src={prod.imagen_url} 
+                          alt={prod.nombre_producto}
+                          className="table-image"
+                        />
+                      ) : (
+                        <span className="no-image">Sin imagen</span>
+                      )}
+                    </td>
+                    <td>{prod.nombre_producto}</td>
+                    <td>{prod.categoria_producto}</td>
+                    <td>${parseFloat(prod.precio_producto).toFixed(2)}</td>
+                    <td>
+                      <span className={`stock-badge ${prod.stock_producto > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                        {prod.stock_producto}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${prod.stock_producto > 0 ? 'available' : 'unavailable'}`}>
+                        {prod.stock_producto > 0 ? "✅ Disponible" : "❌ Agotado"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button className="edit-btn" onClick={() => handleEdit(prod)}>
+                          Editar
+                        </button>
+                        <button className="delete-btn" onClick={() => handleDelete(prod.id_producto)}>
+                          Eliminar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
-                {(!productos || productos.length === 0) && (
-                  <tr>
-                    <td colSpan="5" className="padmin-empty">No hay productos.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </section>
       </main>
 
-      {isModalOpen && (
-        <div className="padmin-backdrop" onClick={cerrarModal}>
-          <div className="padmin-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="padmin-modal-title">{editing ? "Editar producto" : "Nuevo producto"}</h3>
-
-            <form className="padmin-form" onSubmit={guardar}>
-              <input name="nombre_producto" value={form.nombre_producto} onChange={onChange} placeholder="Nombre" required />
-              <input name="categoria_producto" value={form.categoria_producto} onChange={onChange} placeholder="Categoría" required />
-
-              <input
-                type="number"
-                name="precio_producto"
-                value={form.precio_producto}
-                onChange={onChange}
-                placeholder="Precio"
-                step="0.01"
-                min="0"
-                required
-              />
-
-              <input name="URL_imagen" value={form.URL_imagen} onChange={onChange} placeholder="URL imagen (opcional)" />
-              <textarea name="descripcion_producto" value={form.descripcion_producto} onChange={onChange} placeholder="Descripción (opcional)" />
-
-              <select name="id_estado" value={form.id_estado} onChange={onChange} required>
-                <option value="">Selecciona estado</option>
-                {(estados || []).map((e) => (
-                  <option key={e.id_estado} value={e.id_estado}>
-                    {e.descripcion_estado}
-                  </option>
-                ))}
-              </select>
-
-              <div className="padmin-form-actions">
-                <button type="button" className="padmin-btn-outline" onClick={cerrarModal}>Cancelar</button>
-                <button type="submit" className="padmin-btn" disabled={loading}>
-                  {loading ? "Guardando..." : "Guardar"}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <header className="modal-header">
+              <h2>{editId ? "Editar Producto" : "Nuevo Producto"}</h2>
+              <button className="modal-close" onClick={handleCloseModal}>×</button>
+            </header>
+            
+            <form className="modal-form" onSubmit={(e) => e.preventDefault()}>
+              {previewImage && (
+                <div className="image-preview-container">
+                  <img src={previewImage} alt="Vista previa" className="image-preview" />
+                </div>
+              )}
+              
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>Nombre *</label>
+                  <input
+                    type="text"
+                    name="nombre_producto"
+                    value={formData.nombre_producto}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="form-field">
+                  <label>Categoría *</label>
+                  <select
+                    name="categoria_producto"
+                    value={formData.categoria_producto}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="Comida">Comida</option>
+                    <option value="Medicina">Medicina</option>
+                    <option value="Accesorio">Accesorio</option>
+                  </select>
+                </div>
+                
+                <div className="form-field">
+                  <label>Precio ($) *</label>
+                  <input
+                    type="number"
+                    name="precio_producto"
+                    value={formData.precio_producto}
+                    onChange={handleChange}
+                    step="0.01"
+                    min="0"
+                    required
+                  />
+                </div>
+                
+                <div className="form-field">
+                  <label>Stock *</label>
+                  <input
+                    type="number"
+                    name="stock_producto"
+                    value={formData.stock_producto}
+                    onChange={handleChange}
+                    min="0"
+                    required
+                  />
+                  <small className="field-hint">
+                    {formData.stock_producto > 0 
+                      ? "✓ Disponible en tienda" 
+                      : "⚠ Agotado - No visible para clientes"}
+                  </small>
+                </div>
+                
+                <div className="form-field">
+                  <label>Imagen</label>
+                  <input
+                    type="file"
+                    name="URL_imagen"
+                    onChange={handleChange}
+                    accept="image/*"
+                  />
+                </div>
+                
+                <div className="form-field full-width">
+                  <label>Descripción</label>
+                  <textarea
+                    name="descripcion_producto"
+                    value={formData.descripcion_producto}
+                    onChange={handleChange}
+                    rows="3"
+                  />
+                </div>
+              </div>
+              
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={handleCloseModal}>
+                  Cancelar
+                </button>
+                <button type="button" className="save-btn" onClick={handleSave}>
+                  {editId ? "Guardar cambios" : "Crear"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
+      
       <Footer />
     </div>
   );

@@ -231,14 +231,8 @@ class Producto(models.Model):
     fecha_actualizacion_producto = models.DateTimeField(auto_now=True, null=True, blank=True)
     id_usuario_creacion_producto = models.IntegerField(null=True, blank=True)
     id_usuario_actualizacion_producto = models.IntegerField(null=True, blank=True)
-    id_estado = models.ForeignKey(
-        Estado,
-        on_delete=models.PROTECT,
-        db_column="id_estado",
-        related_name="productos",
-        null=True,  # temporal por si ya tienes productos creados
-        blank=True,  
-    )
+    
+    # ✅ ELIMINAR: id_estado (ya no lo necesitamos)
     
     id_usuario = models.ForeignKey(
         Usuario,
@@ -246,14 +240,20 @@ class Producto(models.Model):
         db_column="id_usuario",
         related_name="productos",
     )
+    
+    # ✅ Solo usamos stock
     stock_producto = models.PositiveIntegerField(default=0)
-
 
     class Meta:
         db_table = "Producto"
 
     def __str__(self):
         return self.nombre_producto
+    
+    # ✅ Propiedad para determinar disponibilidad
+    @property
+    def disponible(self):
+        return self.stock_producto > 0
 
 
 class Compra(models.Model):

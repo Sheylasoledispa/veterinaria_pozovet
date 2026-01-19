@@ -23,9 +23,6 @@ const StorePage = () => {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
 
-  // estados (para dropdown)
-  const [estados, setEstados] = useState([]);
-
   // modal crear
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -40,7 +37,7 @@ const StorePage = () => {
     descripcion_producto: "",
     categoria_producto: "",
     precio_producto: "",
-    id_estado: "",
+    stock_producto: 0, // ✅ CAMBIO: Stock en lugar de estado
   });
 
   // ====== MODAL EDITAR ======
@@ -60,24 +57,6 @@ const StorePage = () => {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const norm = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
-
-  const formatEstado = (desc) => {
-    const d = norm(desc);
-    if (d === "disponible") return "Disponible";
-    if (d === "no disponible" || d === "no_disponible" || d === "nodisponible")
-      return "No disponible";
-    return desc || "";
-  };
-
-  // ✅ Solo Disponible / No disponible en el selector
-  const estadosDisponibilidad = useMemo(() => {
-    return (estados || []).filter((e) => {
-      const d = norm(e.descripcion_estado);
-      return d === "disponible" || d === "no disponible" || d === "no_disponible";
-    });
-  }, [estados]);
-
   const resolveImg = (url) => {
     if (!url) return PLACEHOLDER;
     if (String(url).startsWith("http")) return url;
@@ -90,11 +69,22 @@ const StorePage = () => {
     return `${root}${path}`;
   };
 
+  // ✅ Función para determinar disponibilidad basada en stock
+  const getDisponibilidad = (stock) => {
+    return stock > 0 ? "Disponible" : "Agotado";
+  };
+
+  // ✅ Función para obtener clase CSS basada en stock
+  const getStockClass = (stock) => {
+    return stock > 0 ? "store-badge-available" : "store-badge-soldout";
+  };
+
   const fetchProductos = async () => {
     try {
       setLoading(true);
       setError("");
-      const { data } = await api.get("/productos/");
+      const endpoint = isAdmin ? "/productos/admin/" : "/productos/";
+      const { data } = await api.get(endpoint);
       setProductos(data || []);
     } catch (e) {
       console.error(e);
@@ -104,28 +94,10 @@ const StorePage = () => {
     }
   };
 
-  const fetchEstados = async () => {
-    try {
-      const { data } = await api.get("/estados/");
-      const lista = data || [];
-      setEstados(lista);
-
-      // por defecto: Disponible si existe
-      const disponible = lista.find((x) => norm(x.descripcion_estado) === "disponible");
-      if (disponible) {
-        setNuevoProducto((prev) => ({ ...prev, id_estado: String(disponible.id_estado) }));
-      }
-    } catch (e) {
-      console.error("No se pudieron cargar estados", e);
-      setEstados([]);
-    }
-  };
-
   useEffect(() => {
     fetchProductos();
-    fetchEstados();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAdmin]);
 
   // limpiar preview al desmontar / cambiar
   useEffect(() => {
@@ -163,20 +135,19 @@ const StorePage = () => {
   const abrirCrearProducto = async () => {
     setCreateError("");
 
-    setNuevoProducto((prev) => ({
-      ...prev,
+    setNuevoProducto({
       nombre_producto: "",
       descripcion_producto: "",
       categoria_producto: "",
       precio_producto: "",
-    }));
+      stock_producto: 0,
+    });
 
     // reset imagen
     setImgFile(null);
     if (imgPreview?.startsWith("blob:")) URL.revokeObjectURL(imgPreview);
     setImgPreview("");
 
-    await fetchEstados();
     setIsCreateOpen(true);
   };
 
@@ -214,6 +185,7 @@ const StorePage = () => {
     setSaving(true);
     setCreateError("");
 
+    // Validaciones
     if (!nuevoProducto.nombre_producto.trim()) {
       setSaving(false);
       return setCreateError("El nombre es obligatorio.");
@@ -226,16 +198,9 @@ const StorePage = () => {
       setSaving(false);
       return setCreateError("El precio es obligatorio.");
     }
-
-    // asegurar solo Disponible / No disponible
-    if (nuevoProducto.id_estado) {
-      const elegido = estadosDisponibilidad.find(
-        (x) => String(x.id_estado) === String(nuevoProducto.id_estado)
-      );
-      if (!elegido) {
-        setSaving(false);
-        return setCreateError("Selecciona solo Disponible o No disponible.");
-      }
+    if (nuevoProducto.stock_producto < 0) {
+      setSaving(false);
+      return setCreateError("El stock no puede ser negativo.");
     }
 
     try {
@@ -243,8 +208,9 @@ const StorePage = () => {
       fd.append("nombre_producto", nuevoProducto.nombre_producto.trim());
       fd.append("categoria_producto", nuevoProducto.categoria_producto.trim());
       fd.append("precio_producto", String(nuevoProducto.precio_producto).replace(",", "."));
+      fd.append("stock_producto", String(nuevoProducto.stock_producto));
       fd.append("descripcion_producto", nuevoProducto.descripcion_producto?.trim() || "");
-      if (nuevoProducto.id_estado) fd.append("id_estado", String(nuevoProducto.id_estado));
+      
       if (imgFile) fd.append("URL_imagen", imgFile);
 
       await api.post("/productos/", fd, {
@@ -274,7 +240,7 @@ const StorePage = () => {
 
     setEditProducto({
       ...p,
-      id_estado: p?.id_estado ? String(p.id_estado) : "",
+      stock_producto: p.stock_producto || 0,
     });
 
     // imagen
@@ -329,8 +295,8 @@ const StorePage = () => {
       fd.append("nombre_producto", (editProducto.nombre_producto || "").trim());
       fd.append("categoria_producto", (editProducto.categoria_producto || "").trim());
       fd.append("precio_producto", String(editProducto.precio_producto || "").replace(",", "."));
+      fd.append("stock_producto", String(editProducto.stock_producto || 0));
       fd.append("descripcion_producto", (editProducto.descripcion_producto || "").trim());
-      if (editProducto.id_estado) fd.append("id_estado", String(editProducto.id_estado));
 
       if (editImgFile) fd.append("URL_imagen", editImgFile);
 
@@ -456,9 +422,18 @@ const StorePage = () => {
 
                   <div className="store-card-footer">
                     <span className="store-price">${String(p.precio_producto)}</span>
-                    <span className="store-badge">
-                      {formatEstado(p.estado_descripcion || "Disponible")}
-                    </span>
+                    
+                    {/* ✅ Mostrar stock y disponibilidad */}
+                    <div className="store-stock-info">
+                      <span className={`store-badge ${getStockClass(p.stock_producto)}`}>
+                        {getDisponibilidad(p.stock_producto)}
+                      </span>
+                      {isAdmin && p.stock_producto !== undefined && (
+                        <span className="store-stock-number">
+                          ({p.stock_producto} unidades)
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {isAdmin && (
@@ -525,27 +500,24 @@ const StorePage = () => {
                   required
                 />
 
-                {/* ✅ Disponibilidad SOLO 2 opciones */}
-                <select
-                  className="store-select"
-                  name="id_estado"
-                  value={nuevoProducto.id_estado || ""}
-                  onChange={handleNuevoProductoChange}
-                >
-                  <option value="">(Opcional) Disponibilidad</option>
-
-                  {estadosDisponibilidad.length === 0 ? (
-                    <option value="" disabled>
-                      Crea estados "Disponible" y "No disponible"
-                    </option>
-                  ) : (
-                    estadosDisponibilidad.map((e) => (
-                      <option key={e.id_estado} value={e.id_estado}>
-                        {formatEstado(e.descripcion_estado)}
-                      </option>
-                    ))
-                  )}
-                </select>
+                {/* ✅ Stock en lugar de estado */}
+                <div className="store-form-field">
+                  <input
+                    className="store-input"
+                    type="number"
+                    name="stock_producto"
+                    placeholder="Stock disponible"
+                    value={nuevoProducto.stock_producto}
+                    onChange={handleNuevoProductoChange}
+                    min="0"
+                    required
+                  />
+                  <small className="store-field-hint">
+                    {nuevoProducto.stock_producto > 0 
+                      ? "✓ Producto visible en tienda" 
+                      : "⚠ Producto aparecerá como agotado"}
+                  </small>
+                </div>
               </div>
 
               {/* ✅ Subir imagen desde PC (bonito) */}
@@ -636,19 +608,24 @@ const StorePage = () => {
                   required
                 />
 
-                <select
-                  className="store-select"
-                  name="id_estado"
-                  value={editProducto.id_estado || ""}
-                  onChange={handleEditProductoChange}
-                >
-                  <option value="">(Opcional) Disponibilidad</option>
-                  {estadosDisponibilidad.map((e) => (
-                    <option key={e.id_estado} value={e.id_estado}>
-                      {formatEstado(e.descripcion_estado)}
-                    </option>
-                  ))}
-                </select>
+                {/* ✅ Stock en lugar de estado */}
+                <div className="store-form-field">
+                  <input
+                    className="store-input"
+                    type="number"
+                    name="stock_producto"
+                    placeholder="Stock disponible"
+                    value={editProducto.stock_producto || 0}
+                    onChange={handleEditProductoChange}
+                    min="0"
+                    required
+                  />
+                  <small className="store-field-hint">
+                    {editProducto.stock_producto > 0 
+                      ? "✓ Producto visible en tienda" 
+                      : "⚠ Producto aparecerá como agotado"}
+                  </small>
+                </div>
               </div>
 
               {/* ✅ Cambiar imagen (bonito) */}
@@ -718,7 +695,7 @@ const StorePage = () => {
 
             <p className="store-confirm-text">
               Vas a eliminar el producto{" "}
-              <strong>“{productoAEliminar?.nombre_producto}”</strong>. <br />
+              <strong>"{productoAEliminar?.nombre_producto}"</strong>. <br />
               Esta acción no se puede deshacer.
             </p>
 

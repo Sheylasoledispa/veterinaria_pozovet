@@ -1,4 +1,3 @@
-/* Frontend/src/styles/Store.css */
 :root{
   --pozovet-purple:#9b1c8f;
   --pozovet-magenta:#d81b60;
@@ -189,8 +188,9 @@
 .store-card-footer{
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  gap:.6rem;
+  align-items:flex-start;
+  flex-direction: column;
+  gap:.4rem;
   margin-top: .15rem;
 }
 
@@ -200,22 +200,39 @@
   color: var(--pozovet-purple);
 }
 
-/* Badge de estado */
-.store-badge{
-  font-size: .78rem;
+/* ===== Stock y disponibilidad ===== */
+.store-stock-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.store-stock-number {
+  font-size: 0.7rem;
+  color: #6f5979;
+  font-weight: 600;
+}
+
+/* Badges de disponibilidad basados en stock */
+.store-badge-available {
+  font-size: 0.78rem;
   font-weight: 900;
-  padding: .18rem .65rem;
+  padding: 0.18rem 0.65rem;
   border-radius: 999px;
   border: 1px solid rgba(0, 188, 212, 0.22);
   background: rgba(0, 188, 212, 0.12);
   color: #006b7a;
 }
 
-/* Si quieres “Pendiente / No disponible” más fuerte */
-.store-badge.no{
-  border-color: rgba(255, 90, 90, .35);
-  background: rgba(255, 90, 90, .12);
-  color:#7a1f1f;
+.store-badge-soldout {
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.18rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 90, 90, 0.35);
+  background: rgba(255, 90, 90, 0.12);
+  color: #7a1f1f;
 }
 
 /* Responsive */
@@ -223,8 +240,11 @@
   .store-title{ font-size: 1.55rem; }
   .store-filters{ padding: .8rem; }
   .store-imgwrap{ height: 155px; }
+  .store-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
-
 
 /* Botón admin */
 .store-admin-btn{
@@ -240,49 +260,151 @@
 }
 .store-admin-btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
 
-/* Modal */
-.store-modal-backdrop{
+/* ===== MODALES ===== */
+
+/* Modal backdrop */
+.store-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20,10,25,.45);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: 18px;
+  background: rgba(20, 10, 25, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
   z-index: 9999;
+  animation: fadeIn 0.2s ease;
 }
 
-.store-modal{
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal principal */
+.store-modal {
   width: 100%;
-  max-width: 760px;
-  border-radius: 26px;
-  padding: 22px;
-  background: radial-gradient(circle at top, #ffffff 0, var(--pozovet-bg) 55%, #ecd9f5);
-  border: 1px solid rgba(155, 28, 143, 0.14);
-  box-shadow: 0 24px 70px rgba(58, 33, 61, 0.35);
+  max-width: 760px; /* Mantenemos el tamaño original */
+  border-radius: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--pozovet-bg) 100%);
+  border: 1px solid rgba(155, 28, 143, 0.2);
+  box-shadow: 0 20px 60px rgba(58, 33, 61, 0.4);
+  animation: slideUp 0.3s ease;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-.store-modal-title{
-  margin: 0 0 14px;
-  font-size: 1.45rem;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.store-modal-title {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
   color: var(--pozovet-dark);
   font-weight: 900;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.store-form{ display:flex; flex-direction:column; gap: .7rem; }
-.store-form-row{ display:flex; gap: .6rem; flex-wrap:wrap; }
-.store-form-row .store-input{ flex: 1 1 220px; }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: var(--pozovet-purple);
+  line-height: 1;
+  padding: 0 4px;
+  border-radius: 50%;
+  transition: 0.15s ease;
+}
 
-.store-textarea{
-  border-radius: 18px;
+.modal-close:hover {
+  background: rgba(155, 28, 143, 0.1);
+  transform: scale(1.1);
+}
+
+/* ===== FORMULARIO COMPACTO ===== */
+.store-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.store-form-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.3rem;
+}
+
+/* ===== CAMPOS ESPECIALES: PRECIO Y STOCK MÁS PEQUEÑOS ===== */
+.store-input,
+.store-select {
+  border-radius: 999px;
   border: 1px solid rgba(155, 28, 143, 0.25);
-  padding: .75rem .95rem;
-  font-size: .92rem;
-  outline:none;
-  background: rgba(250,247,255,.95);
-  transition: .15s ease;
-  resize: vertical;
+  padding: 0.52rem 0.9rem;
+  font-size: 0.92rem;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  transition: 0.15s ease;
+  min-height: 40px;
+  flex: 1 1 200px;
 }
+
+/* Inputs de NÚMERO (precio y stock) mucho más pequeños */
+.store-input[type="number"] {
+  padding: 0.3rem 0.6rem !important; /* ¡Más pequeño! */
+  font-size: 0.85rem !important; /* Fuente más pequeña */
+  min-height: 34px !important; /* Altura reducida */
+  width: 110px !important; /* Ancho fijo y pequeño */
+  flex: 0 0 auto !important; /* No se expande */
+}
+
+/* Precio un poco más ancho para decimales */
+.store-input[type="number"][name="precio_producto"],
+.store-input[type="number"][name="precio_producto"] {
+  width: 130px !important;
+}
+
+/* Stock más pequeño */
+.store-input[type="number"][name="stock_producto"],
+.store-input[type="number"][name="stock_producto"] {
+  width: 90px !important;
+}
+
+/* Contenedor para campos pequeños */
+.store-form-field {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenedor especial para precio/stock (no se expande) */
+.store-form-field:has(input[type="number"]) {
+  flex: 0 0 auto !important;
+}
+
+.store-textarea {
+  border-radius: 12px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.88rem;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  transition: 0.15s ease;
+  resize: vertical;
+  min-height: 60px;
+}
+
 .store-textarea:focus{
   border-color: var(--pozovet-magenta);
   box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.18);
@@ -326,8 +448,15 @@
 .store-file-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.store-file-btn {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.82rem;
+  border-radius: 12px;
 }
 
 /* Oculta el input nativo */
@@ -371,7 +500,7 @@
   box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.25), 0 6px 16px rgba(155, 28, 143, 0.45);
 }
 
-/* “Ningún archivo…” como pill igual a tus inputs */
+/* "Ningún archivo…" como pill igual a tus inputs */
 .store-file-name {
   flex: 1 1 260px;
   padding: 0.52rem 0.9rem;
@@ -467,14 +596,13 @@
 }
 
 .store-confirm-text{
-  
   margin: 0.35rem 0 0.9rem;
   font-size: 0.92rem;
   color: #5b3f7a;
   line-height: 1.35;
 }
 
-/* Botón “Sí, eliminar” con look peligro */
+/* Botón "Sí, eliminar" con look peligro */
 .store-btn-danger{
   background: linear-gradient(135deg, #c62828, var(--pozovet-magenta));
   color: #fff;
@@ -497,7 +625,6 @@
 }
 
 /* ===== Botones Editar (outline) / Eliminar (gradiente) ===== */
-
 .store-card-actions{
   display: flex;
   gap: 0.6rem;
@@ -550,4 +677,77 @@
 .store-card-btn-danger:hover{
   filter: brightness(1.05);
   transform: translateY(-1px);
+}
+
+/* ===== Hint para campo de stock ===== */
+.store-field-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6f5979;
+  font-style: italic;
+}
+
+/* Mejorar responsividad en móviles */
+@media (max-width: 768px) {
+  .store-stock-info {
+    align-items: flex-start;
+  }
+  
+  .store-form-row {
+    flex-direction: column;
+  }
+  
+  .store-form-field {
+    width: 100%;
+  }
+  
+  /* En móviles, los inputs de número se expanden */
+  .store-input[type="number"] {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+}
+
+/* Mejorar visualización en cards de admin */
+.store-card-body .store-card-actions {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(155, 28, 143, 0.1);
+}
+
+/* Ajustes responsive para móviles en modales */
+@media (max-width: 640px) {
+  .store-modal {
+    max-width: 95%;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .store-form-row {
+    flex-direction: column;
+  }
+  
+  .store-input,
+  .store-select,
+  .store-textarea {
+    flex: 1 1 100%;
+  }
+  
+  .store-form-actions {
+    flex-direction: column;
+  }
+  
+  .store-btn,
+  .store-btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Modal pequeño de confirmación */
+.store-modal-sm {
+  max-width: 320px;
+  padding: 16px;
+  border-radius: 16px;
 }

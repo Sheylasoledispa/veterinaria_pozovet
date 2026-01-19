@@ -147,51 +147,51 @@ class ConsultaSerializer(serializers.ModelSerializer):
 
 class ProductoSerializer(serializers.ModelSerializer):
     id_usuario = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    # ✅ Asegura que DRF trate esto como archivo
     URL_imagen = serializers.ImageField(required=False, allow_null=True)
-
-    estado_descripcion = serializers.CharField(
-        source="id_estado.descripcion_estado",
-        read_only=True
-    )
-
+    
+    # ✅ Campo calculado basado en stock
+    disponible = serializers.SerializerMethodField()
+    
     imagen_url = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = Producto
         fields = "__all__"
-
+        extra_fields = ['disponible', 'imagen_url']
+    
+    def get_disponible(self, obj):
+        """Determina si el producto está disponible basado en stock"""
+        return obj.stock_producto > 0
+    
     def get_imagen_url(self, obj):
         request = self.context.get("request")
         if obj.URL_imagen and hasattr(obj.URL_imagen, "url"):
             url = obj.URL_imagen.url
             return request.build_absolute_uri(url) if request else url
         return ""
-
+    
     def create(self, validated_data):
         imagen = validated_data.pop("URL_imagen", None)
         producto = Producto.objects.create(**validated_data)
-
+        
         if imagen:
             producto.URL_imagen = imagen
             producto.save(update_fields=["URL_imagen"])
-
+        
         return producto
-
+    
     def update(self, instance, validated_data):
         imagen = validated_data.pop("URL_imagen", None)
-
+        
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-
+        
         # ✅ Solo cambia imagen si enviaron una nueva
         if imagen:
             instance.URL_imagen = imagen
-
+        
         instance.save()
         return instance
-
 
 
 class CompraSerializer(serializers.ModelSerializer):

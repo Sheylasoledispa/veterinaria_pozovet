@@ -1,11 +1,9 @@
 from ..models import Producto
 
 def productos_publicos():
-    # Cliente: solo disponibles
-    return Producto.objects.filter(
-        id_estado__descripcion_estado__iexact="Disponible"
-    ).order_by("-fecha_creacion_producto")
-
+    # ✅ Solo productos con stock > 0
+    return Producto.objects.filter(stock_producto__gt=0).order_by("-fecha_creacion_producto")
 
 def productos_admin():
+    # ✅ Admin ve todos (incluye sin stock)
     return Producto.objects.all().order_by("-fecha_creacion_producto")
