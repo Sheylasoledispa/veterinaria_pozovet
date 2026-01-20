@@ -106,11 +106,11 @@ const Navbar = () => {
           )}
 
            <div className="navbar-right">
-        <CartIcon />
+         {usuario && <CartIcon />}
       </div>
 
       {/* ✅ IMPORTANTÍSIMO: el modal debe estar renderizado */}
-      <CartModal />
+       {usuario && <CartModal />}
         </div>
       </nav>
     </header>
