@@ -1,4 +1,5 @@
 import { useCart } from "../context/CartContext";
+import "./CartIcon.css";
 
 const CartIcon = () => {
   const { cartCount, toggleCart } = useCart();
@@ -10,8 +11,11 @@ const CartIcon = () => {
       className="cart-icon-btn"
       aria-label="Abrir carrito"
     >
-      🛒
-      {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+      <i className="fa-solid fa-cart-shopping"></i>
+
+      {cartCount > 0 && (
+        <span className="cart-badge">{cartCount}</span>
+      )}
     </button>
   );
 };

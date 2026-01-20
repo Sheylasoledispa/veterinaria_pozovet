@@ -1,7 +1,8 @@
 import { useState } from "react";
 import api from "../api";
 import { useCart } from "../context/CartContext";
-import "../styles/CartModal.css";
+import "./CartModal.css";
+
 
 const CartModal = () => {
   const {
