@@ -9,6 +9,8 @@
   --store-shadow: 0 14px 34px rgba(69, 39, 160, 0.14);
 }
 
+/* Fuente global por defecto */
+
 /* Fondo general */
 .store-root{
   min-height: 100vh;

@@ -268,7 +268,7 @@ const ConsultasAdminPage = () => {
                   <option value="">Todos los doctores</option>
                   {doctores.map(doc => (
                     <option key={doc.id_usuario} value={doc.id_usuario}>
-                      {doc.rol === "Veterinario" ? "Dr." : ""} {doc.nombre} {doc.apellido} ({doc.rol || "Sin rol"})
+                      {doc.rol === "Veterinario" ? "Dr." : ""} {doc.nombre} {doc.apellido}
                     </option>
                   ))}
                 </select>

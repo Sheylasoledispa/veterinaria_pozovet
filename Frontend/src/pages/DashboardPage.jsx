@@ -64,6 +64,13 @@ const getUserRoleId = () => {
   // Modal mascotas
   const [isMascotaModalOpen, setIsMascotaModalOpen] = useState(false);
 
+  // ✅ NUEVO: modal eliminar mascota
+  const [isDeleteMascotaModalOpen, setIsDeleteMascotaModalOpen] = useState(false);
+  const [deleteMascotaId, setDeleteMascotaId] = useState("");
+  const [deleteMascotaError, setDeleteMascotaError] = useState("");
+  const [deletingMascota, setDeletingMascota] = useState(false);
+
+
   // Historial mascota modal
   const [isHistorialModalOpen, setIsHistorialModalOpen] = useState(false);
 
@@ -124,6 +131,44 @@ const getUserRoleId = () => {
     setIsMascotaModalOpen(false);
     setErrorMascota("");
   };
+
+  const abrirEliminarMascotaModal = () => {
+  setDeleteMascotaError("");
+  setDeleteMascotaId("");
+  setDeletingMascota(false);
+  setIsDeleteMascotaModalOpen(true);
+};
+
+const cerrarEliminarMascotaModal = () => {
+  setIsDeleteMascotaModalOpen(false);
+  setDeleteMascotaError("");
+  setDeleteMascotaId("");
+  setDeletingMascota(false);
+};
+
+const confirmarEliminarMascota = async () => {
+  if (!deleteMascotaId) {
+    setDeleteMascotaError("Selecciona una mascota.");
+    return;
+  }
+
+  setDeletingMascota(true);
+  setDeleteMascotaError("");
+
+  try {
+    await api.delete(`/mascotas/${Number(deleteMascotaId)}/`);
+    await fetchMascotas(); // refresca lista
+    cerrarEliminarMascotaModal();
+  } catch (err) {
+    console.error(err);
+    setDeleteMascotaError(
+      err?.response?.data?.detail || "No se pudo eliminar la mascota."
+    );
+  } finally {
+    setDeletingMascota(false);
+  }
+};
+
 
   const handleRegistrarMascota = async (e) => {
     e.preventDefault();
@@ -410,7 +455,7 @@ const getUserRoleId = () => {
                 className="dash-card-btn dash-card-btn-outline"
                 onClick={abrirHistorialModal}
               >
-                Ver mis citas
+                Ver citas
               </button>
             </div>
 
@@ -442,13 +487,26 @@ const getUserRoleId = () => {
                 </>
               )}
 
-              <button
-                type="button"
-                className="dash-card-btn"
-                onClick={abrirMascotaModal}
-              >
-                Registrar nueva mascota
-              </button>
+              <div className="dash-card-btn-row">
+                <button
+                  type="button"
+                  className="dash-card-btn"
+                  onClick={abrirMascotaModal}
+                >
+                  Registrar nueva mascota
+                </button>
+
+                <button
+                  type="button"
+                  className="dash-card-btn dash-card-btn-outline dash-card-btn-danger"
+                  onClick={abrirEliminarMascotaModal}
+                  disabled={mascotas.length === 0}
+                  title={mascotas.length === 0 ? "No tienes mascotas para eliminar" : ""}
+                >
+                  Eliminar mascota
+                </button>
+              </div>
+
             </div>
           </section>
 
@@ -796,6 +854,59 @@ const getUserRoleId = () => {
           </div>
         </div>
       )}
+
+      {/* ✅ MODAL: Eliminar mascota */}
+      {isDeleteMascotaModalOpen && (
+        <div className="dash-modal-backdrop" onClick={cerrarEliminarMascotaModal}>
+          <div
+            className="dash-modal dash-modal-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="dash-modal-title">Eliminar mascota</h3>
+
+            <p className="dash-delete-hint">
+              Selecciona una mascota para eliminarla. Esta acción no se puede deshacer.
+            </p>
+
+            <div className="dash-form">
+              <select
+                value={deleteMascotaId}
+                onChange={(e) => setDeleteMascotaId(e.target.value)}
+              >
+                <option value="">-- Selecciona una mascota --</option>
+                {mascotas.map((m) => (
+                  <option key={m.id_mascota} value={m.id_mascota}>
+                    {m.nombre_mascota} · {m.especie}
+                  </option>
+                ))}
+              </select>
+
+              {deleteMascotaError && <p className="dash-error">{deleteMascotaError}</p>}
+
+              <div className="dash-form-actions">
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-outline"
+                  onClick={cerrarEliminarMascotaModal}
+                  disabled={deletingMascota}
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-danger"
+                  onClick={confirmarEliminarMascota}
+                  disabled={deletingMascota || !deleteMascotaId}
+                >
+                  {deletingMascota ? "Eliminando..." : "Eliminar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <Footer />
     </div>
