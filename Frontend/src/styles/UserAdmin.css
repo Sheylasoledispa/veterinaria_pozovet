@@ -181,6 +181,9 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 500;
+  background: rgba(0, 188, 212, 0.12);
+  color: var(--pozovet-teal);
+
 }
 
 .ua-role-chip.admin {
@@ -188,10 +191,6 @@
   color: var(--pozovet-purple);
 }
 
-.ua-role-chip.normal {
-  background: rgba(0, 188, 212, 0.12);
-  color: var(--pozovet-teal);
-}
 
 /* botones acción */
 .ua-actions {
@@ -648,14 +647,47 @@
 .ua-checkbox {
   display: flex;
   align-items: center;
-  font-weight: 400;     /* ❌ sin negrita */
-  font-size: 16px;      /* texto un poco más grande */
+  font-weight: 400;
+  font-size: 16px;
   cursor: pointer;
 }
 
 .ua-checkbox input[type="checkbox"] {
-  margin-right: 16px;  /* 🔥 MÁS separación del texto */
+  margin-right: 16px; 
   width: 18px;
   height: 18px;
   cursor: pointer;
+}
+
+
+
+.ua-role-chip.worker {
+  background: rgba(216, 27, 96, 0.12);
+  color: var(--pozovet-magenta);
+}
+
+
+.toggle-group {
+  display: flex;
+  gap: 8px;
+  background: #f7e8f7;
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--pozovet-purple);
+  transition: 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: var(--pozovet-purple);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(155, 28, 143, 0.35);
 }

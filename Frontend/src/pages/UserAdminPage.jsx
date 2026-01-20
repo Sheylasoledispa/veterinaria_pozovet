@@ -4,6 +4,42 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/UserAdmin.css";
 
+const ROLE_ADMIN = 1;
+const ROLE_CLIENTE = 2;
+const ROLE_RECEPCIONISTA = 3;
+const ROLE_VETERINARIO = 4;
+
+const getRoleId = (u) => {
+  const r = u?.id_rol;
+  return Number(typeof r === "object" ? r?.id_rol : r);
+};
+
+const roleLabel = (id) => {
+  switch (Number(id)) {
+    case ROLE_ADMIN:
+      return "Administrador";
+    case ROLE_RECEPCIONISTA:
+      return "Recepcionista";
+    case ROLE_VETERINARIO:
+      return "Veterinario";
+    default:
+      return "Usuario";
+  }
+};
+
+const rolePillClass = (id) => {
+  switch (Number(id)) {
+    case ROLE_ADMIN:
+      return "admin";
+    case ROLE_RECEPCIONISTA:
+    case ROLE_VETERINARIO:
+      return "worker";
+    default:
+      return "user";
+  }
+};
+
+
 const UserAdminPage = () => {
   const [tipo, setTipo] = useState("clientes");
   const [usuarios, setUsuarios] = useState([]);
@@ -32,6 +68,29 @@ const [loadingEspecialidades, setLoadingEspecialidades] = useState(false);
 const [nuevaEspecialidad, setNuevaEspecialidad] = useState("");
 const [especialidadError, setEspecialidadError] = useState("");
 const [savingEspecialidad, setSavingEspecialidad] = useState(false);
+
+
+  // Modal: elegir tipo de trabajador
+  const [isWorkerPickOpen, setIsWorkerPickOpen] = useState(false);
+  const [workerTarget, setWorkerTarget] = useState(null);
+  const [workerRolePick, setWorkerRolePick] = useState(String(ROLE_RECEPCIONISTA));
+
+  const abrirHacerTrabajador = (u) => {
+    setWorkerTarget(u);
+    setWorkerRolePick(String(ROLE_RECEPCIONISTA));
+    setIsWorkerPickOpen(true);
+  };
+
+  const cerrarHacerTrabajador = () => {
+    setIsWorkerPickOpen(false);
+    setWorkerTarget(null);
+  };
+
+  const confirmarHacerTrabajador = async () => {
+    if (!workerTarget) return;
+    await cambiarRol(workerTarget.id_usuario, Number(workerRolePick));
+    cerrarHacerTrabajador();
+  };
 
 
   // ✅ Modal para registrar mascota a un usuario (admin)
@@ -165,7 +224,7 @@ const abrirEspecialidadModal = async (usuario) => {
 
   await cargarActividades();
 
-  // 🔥 Cargar actividades reales del usuario
+  // Cargar actividades reales del usuario
   try {
     const res = await api.get(
       `/doctores/${usuario.id_usuario}/actividades/`
@@ -350,8 +409,13 @@ const guardarEspecialidades = async () => {
     }
   };
 
-  const tituloActual =
-    tipo === "clientes" ? "Usuarios registrados" : "Usuarios del personal";
+    const tituloActual =
+    tipo === "clientes"
+      ? "Usuarios registrados"
+      : tipo === "trabajadores"
+      ? "Trabajadores registrados"
+      : "Administradores registrados";
+
 
   return (
     <>
@@ -367,22 +431,24 @@ const guardarEspecialidades = async () => {
               </p>
             </div>
 
-            <div className="ua-toggle-group">
+            <div className="toggle-group">
               <button
-                type="button"
-                className={`ua-toggle-btn ${
-                  tipo === "clientes" ? "active" : ""
-                }`}
+                className={`toggle-btn ${tipo === "clientes" ? "active" : ""}`}
                 onClick={() => setTipo("clientes")}
               >
                 Usuarios
               </button>
+
               <button
-                type="button"
-                className={`ua-toggle-btn ${
-                  tipo === "trabajadores" ? "active" : ""
-                }`}
+                className={`toggle-btn ${tipo === "trabajadores" ? "active" : ""}`}
                 onClick={() => setTipo("trabajadores")}
+              >
+                Trabajadores
+              </button>
+
+              <button
+                className={`toggle-btn ${tipo === "admins" ? "active" : ""}`}
+                onClick={() => setTipo("admins")}
               >
                 Administradores
               </button>
@@ -436,59 +502,118 @@ const guardarEspecialidades = async () => {
                 </div>
 
                 <div className="ua-user-meta">
-                  <span
-                    className={`ua-role-chip ${
-                      u.id_rol === 1 ? "admin" : "normal"
-                    }`}
-                  >
-                    {u.rol || (u.id_rol === 1 ? "Administrador" : "Usuario")}
-                  </span>
+                  {(() => {
+                    const rid = getRoleId(u);
 
-                  <div className="ua-actions">
-                    {u.id_rol === 1 ? (
-                      <button
-                        type="button"
-                        className="ua-btn-outline"
-                        onClick={() => cambiarRol(u.id_usuario, 2)}
-                      >
-                        Quitar admin
-                      </button>
+                    return (
+                      <>
+                        <span className={`ua-role-chip ${rolePillClass(rid)}`}>
+                          {u.rol || roleLabel(rid)}
+                        </span>
 
-                      
-                    ) : (
-                      <button
-                        type="button"
-                        className="ua-btn-primary"
-                        onClick={() => cambiarRol(u.id_usuario, 1)}
-                      >
-                        Hacer admin
-                      </button>
-                    )}
-                    <button
-  type="button"
-  className="ua-btn-outline"
-  onClick={() => abrirEspecialidadModal(u)}
->
-  Asignar especialidades
-</button>
+                        <div className="ua-actions">
+                          {/* TAB: USUARIOS (CLIENTES) */}
+                          {tipo === "clientes" && (
+                            <>
+                              <button
+                                type="button"
+                                className="ua-btn-primary"
+                                onClick={() => cambiarRol(u.id_usuario, ROLE_ADMIN)}
+                              >
+                                Hacer admin
+                              </button>
 
+                              <button
+                                type="button"
+                                className="ua-btn-outline"
+                                onClick={() => abrirHacerTrabajador(u)}
+                              >
+                                Hacer trabajador
+                              </button>
 
-                    <button
-                      type="button"
-                      className="ua-btn-outline ua-btn-mascota"
-                      onClick={() => abrirMascotaModal(u)}
-                    >
-                      Registrar mascota
-                    </button>
+                              <button
+                                type="button"
+                                className="ua-btn-outline ua-btn-mascota"
+                                onClick={() => abrirMascotaModal(u)}
+                              >
+                                Registrar mascota
+                              </button>
 
-                    <button
-                      type="button"
-                      className="ua-btn-danger"
-                      onClick={() => eliminar(u.id_usuario)}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
+                              <button
+                                type="button"
+                                className="ua-btn-danger"
+                                onClick={() => eliminar(u.id_usuario)}
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          )}
+
+                          {/* TAB: TRABAJADORES */}
+                          {tipo === "trabajadores" && (
+                            <>
+                              <button
+                                type="button"
+                                className="ua-btn-outline"
+                                onClick={() => cambiarRol(u.id_usuario, ROLE_CLIENTE)}
+                              >
+                                Quitar trabajador
+                              </button>
+
+                              <button
+                                type="button"
+                                className="ua-btn-primary"
+                                onClick={() => cambiarRol(u.id_usuario, ROLE_ADMIN)}
+                              >
+                                Hacer admin
+                              </button>
+
+                              {/* Especialidades: SOLO para Veterinario */}
+                              {rid === ROLE_VETERINARIO && (
+                                <button
+                                  type="button"
+                                  className="ua-btn-outline"
+                                  onClick={() => abrirEspecialidadModal(u)}
+                                >
+                                  Asignar especialidades
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                className="ua-btn-danger"
+                                onClick={() => eliminar(u.id_usuario)}
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          )}
+
+                          {/* TAB: ADMINISTRADORES (sin registrar mascota) */}
+                          {tipo === "admins" && (
+                            <>
+                              <button
+                                type="button"
+                                className="ua-btn-outline"
+                                onClick={() => cambiarRol(u.id_usuario, ROLE_CLIENTE)}
+                              >
+                                Quitar admin
+                              </button>
+
+                              <button
+                                type="button"
+                                className="ua-btn-danger"
+                                onClick={() => eliminar(u.id_usuario)}
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+
                 </div>
               </div>
             ))}
@@ -874,23 +999,23 @@ const guardarEspecialidades = async () => {
               placeholder="Ej: Vacunación"
             />
 
-<div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-  <button
-    className="ua-btn-outline"
-    onClick={crearActividad}
-    disabled={savingEspecialidad}
-  >
-    {savingEspecialidad ? "Creando..." : "Crear"}
-  </button>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button
+                  className="ua-btn-outline"
+                  onClick={crearActividad}
+                  disabled={savingEspecialidad}
+                >
+                  {savingEspecialidad ? "Creando..." : "Crear"}
+                </button>
 
-  <button
-    className="ua-btn-danger"
-    onClick={eliminarActividad}
-    disabled={especialidadesSeleccionadas.length === 0}
-  >
-    Eliminar
-  </button>
-</div>
+                <button
+                  className="ua-btn-danger"
+                  onClick={eliminarActividad}
+                  disabled={especialidadesSeleccionadas.length === 0}
+                >
+                  Eliminar
+                </button>
+              </div>
 
 
             {especialidadError && (
@@ -911,6 +1036,44 @@ const guardarEspecialidades = async () => {
     </div>
   </div>
 )}
+      {/* Modal: Elegir tipo de trabajador */}
+{isWorkerPickOpen && (
+  <div className="ua-modal-backdrop" onClick={cerrarHacerTrabajador}>
+    <div className="ua-modal" onClick={(e) => e.stopPropagation()}>
+      <h3 className="ua-modal-title">Hacer trabajador</h3>
+      <p className="ua-modal-subtitle">
+        Elige el tipo de trabajador para:{" "}
+        <b>{workerTarget?.nombre} {workerTarget?.apellido}</b>
+      </p>
+
+      <div className="ua-form">
+        <label className="ua-label">Tipo de trabajador</label>
+        <select
+          className="ua-input"
+          value={workerRolePick}
+          onChange={(e) => setWorkerRolePick(e.target.value)}
+        >
+          <option value={ROLE_RECEPCIONISTA}>Recepcionista</option>
+          <option value={ROLE_VETERINARIO}>Veterinario</option>
+        </select>
+
+        <div className="ua-form-actions">
+          <button className="ua-btn" type="button" onClick={cerrarHacerTrabajador}>
+            Cancelar
+          </button>
+          <button
+            className="ua-btn ua-btn-primary"
+            type="button"
+            onClick={confirmarHacerTrabajador}
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       <Footer />
     </>
   );

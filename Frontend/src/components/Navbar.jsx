@@ -2,26 +2,49 @@ import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import logoPozovet from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext";
-import CartIcon from './CartIcon';
-import CartModal from './CartModal';
+import CartIcon from "./CartIcon";
+import CartModal from "./CartModal";
 
 const Navbar = () => {
   const { token, usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   const isLogged = !!token;
-  
-  // Obtener el id_rol correctamente (puede ser objeto o número)
+
+  // Obtener id del rol (por si viene como objeto)
   const getIdRol = () => {
     if (!usuario) return null;
-    if (typeof usuario.id_rol === 'object') {
+    if (typeof usuario.id_rol === "object") {
       return usuario.id_rol.id_rol;
     }
     return usuario.id_rol;
   };
-  
+
   const idRol = getIdRol();
-  const isAdmin = idRol === 1;
+
+  // Roles
+  const roles = {
+    ADMIN: 1,
+    CLIENTE: 2,
+    VETERINARIO: 4,
+    RECEPCIONISTA: 3,
+  };
+
+  // Permisos
+  const canViewStore = isLogged; // todos los logueados
+  const canViewFacturas =
+    idRol === roles.ADMIN ||
+    idRol === roles.CLIENTE ||
+    idRol === roles.RECEPCIONISTA;
+
+  const canViewHorarios =
+    idRol === roles.ADMIN ||
+    idRol === roles.VETERINARIO ||
+    idRol === roles.RECEPCIONISTA;
+
+  const canViewConsultas = idRol === roles.ADMIN;
+
+  const canManageUsers = idRol === roles.ADMIN;
 
   const handleLogout = () => {
     logout();
@@ -66,28 +89,34 @@ const Navbar = () => {
                 Inicio
               </Link>
 
-              {/* Tienda para todos los usuarios logueados */}
-              <Link to="/tienda" className="nav-link">
-                Tienda
-              </Link>
-              {/* Facturas para todos los usuarios logueados */}
-              <Link to="/facturas" className="nav-link">
-                Facturas
-              </Link>
+              {canViewStore && (
+                <Link to="/tienda" className="nav-link">
+                  Tienda
+                </Link>
+              )}
 
-              {/* SOLO ADMIN - Panel de administración */}
-              {isAdmin && (
-                <>
-                  <Link to="/admin/users" className="nav-link">
-                    Usuarios
-                  </Link>
-                  <Link to="/admin/horarios" className="nav-link">
-                    Horarios
-                  </Link>
-                  <Link to="/admin/consultas" className="nav-link">
-                    Consultas
-                  </Link>
-                </>
+              {canViewFacturas && (
+                <Link to="/facturas" className="nav-link">
+                  Facturas
+                </Link>
+              )}
+
+              {canViewHorarios && (
+                <Link to="/admin/horarios" className="nav-link">
+                  Horarios
+                </Link>
+              )}
+
+              {canViewConsultas && (
+                <Link to="/admin/consultas" className="nav-link">
+                  Consultas
+                </Link>
+              )}
+
+              {canManageUsers && (
+                <Link to="/admin/users" className="nav-link">
+                  Usuarios
+                </Link>
               )}
 
               <Link to="/perfil" className="nav-btn nav-btn-outline">
@@ -101,16 +130,15 @@ const Navbar = () => {
               >
                 Cerrar sesión
               </button>
-              
             </>
           )}
 
-           <div className="navbar-right">
-         {usuario && <CartIcon />}
-      </div>
+          {/* Carrito: solo usuarios que compran */}
+          <div className="navbar-right">
+            {isLogged && <CartIcon />}
+          </div>
 
-      {/* ✅ IMPORTANTÍSIMO: el modal debe estar renderizado */}
-       {usuario && <CartModal />}
+          {isLogged && <CartModal />}
         </div>
       </nav>
     </header>

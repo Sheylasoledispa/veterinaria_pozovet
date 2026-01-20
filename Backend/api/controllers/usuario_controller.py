@@ -7,6 +7,17 @@ from ..serializers import UsuarioSerializer, HistorialUsuarioSerializer
 from ..services import usuario_service
 from ..models import Usuario, Rol, HistorialUsuario
 
+ROLE_ADMIN = 1
+ROLE_CLIENTE = 2
+ROLE_RECEPCIONISTA = 3
+ROLE_VETERINARIO = 4
+WORKER_ROLES = (ROLE_ADMIN,ROLE_RECEPCIONISTA, ROLE_VETERINARIO)
+
+def _is_admin(user):
+    try:
+        return getattr(user, "id_rol", None) and user.id_rol.id_rol == ROLE_ADMIN
+    except Exception:
+        return False
 
 def _get_user_id(user):
     return getattr(user, "id_usuario", getattr(user, "pk", None))
@@ -146,18 +157,33 @@ def usuarios_detail(request, pk: int):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def usuarios_por_tipo(request, tipo):
+    """
+    clientes       -> rol 2
+    trabajadores   -> rol 3 y 4
+    admins         -> rol 1
+    """
     if not _is_admin(request.user):
-        return Response({"error": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"detail": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
 
-    if tipo == "clientes":
-        usuarios = Usuario.objects.filter(id_rol__id_rol=2)  # clientes
-    elif tipo == "trabajadores":
-        usuarios = Usuario.objects.exclude(id_rol__id_rol=2)  # todos menos clientes
+    tipo = (tipo or "").lower().strip()
+
+    if tipo in ("clientes", "usuarios"):
+        qs = Usuario.objects.filter(id_rol__id_rol=ROLE_CLIENTE)
+
+    elif tipo in ("trabajadores", "empleados"):
+        qs = Usuario.objects.filter(id_rol__id_rol__in=WORKER_ROLES)
+
+    elif tipo in ("admins", "administradores", "admin"):
+        qs = Usuario.objects.filter(id_rol__id_rol=ROLE_ADMIN)
+
     else:
-        return Response({"error": "Tipo inválido"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "Tipo inválido. Usa: clientes | trabajadores | admins"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-    serializer = UsuarioSerializer(usuarios, many=True)
-    return Response(serializer.data)
+    serializer = UsuarioSerializer(qs, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["PUT"])
@@ -222,19 +248,28 @@ def historial_global_usuarios(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def doctores_list(request):
-    # Por ahora: los doctores son los admins (id_rol = 1)
-    if request.user.id_rol.id_rol != 1:
-        return Response({"error": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
+    """
+    Lista para dropdowns / schedule:
+    - Admin (1)
+    - Recepcionista (3)
+    - Veterinario (4)
+    (y accesible para cualquier usuario logueado)
+    """
 
-    doctores = Usuario.objects.filter(id_rol__id_rol=1).order_by("nombre", "apellido")
+    personal = Usuario.objects.filter(
+        id_rol__id_rol__in=[ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO]
+    ).order_by("nombre", "apellido")
+
     data = [
         {
-            "id_usuario": d.id_usuario,
-            "nombre": d.nombre,
-            "apellido": d.apellido,
-            "correo": d.correo,
+            "id_usuario": p.id_usuario,
+            "nombre": p.nombre,
+            "apellido": p.apellido,
+            "correo": p.correo,
+            "id_rol": p.id_rol.id_rol if p.id_rol else None,
+            "rol": p.id_rol.descripcion_rol if p.id_rol else None,
         }
-        for d in doctores
+        for p in personal
     ]
     return Response(data, status=status.HTTP_200_OK)
 
@@ -242,10 +277,12 @@ def doctores_list(request):
 @permission_classes([IsAuthenticated])
 def usuarios_doctores(request):
     """
-    Devuelve lista simple de doctores.
-    Por ahora: doctores = usuarios con rol admin (id_rol = 1)
+    Doctores = Veterinarios (rol 4)
     """
-    doctores = Usuario.objects.filter(id_rol__id_rol=1).values(
+    if not _is_admin(request.user):
+        return Response({"detail": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+
+    doctores = Usuario.objects.filter(id_rol__id_rol=ROLE_VETERINARIO).values(
         "id_usuario", "nombre", "apellido", "correo"
     )
-    return Response(list(doctores))
+    return Response(list(doctores), status=status.HTTP_200_OK)

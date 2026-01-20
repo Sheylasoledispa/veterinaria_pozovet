@@ -48,7 +48,7 @@ const esFechaPasada = Boolean(selectedDate && selectedDate < hoyStr);
     try {
       setLoadingDoctores(true);
       setDoctoresError("");
-      const res = await api.get("/usuarios/tipo/trabajadores/");
+      const res = await api.get("/usuarios/doctores/");
       setDoctores(res.data || []);
     } catch (err) {
       console.error(err);
