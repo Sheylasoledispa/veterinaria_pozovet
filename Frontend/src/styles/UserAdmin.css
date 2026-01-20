@@ -209,6 +209,32 @@
   transition: 0.2s ease;
 }
 
+.ua-btn {
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 2px solid transparent;
+  letter-spacing: 0.01em;
+}
+
+
+.ua-btn:not(.ua-btn-primary) {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--pozovet-purple);
+  border-color: rgba(155, 28, 143, 0.35);
+  box-shadow: 0 4px 12px rgba(155, 28, 143, 0.1);
+}
+
+.ua-btn:not(.ua-btn-primary):hover {
+  background: rgba(155, 28, 143, 0.05);
+  border-color: var(--pozovet-magenta);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(155, 28, 143, 0.15);
+}
+
 /* hacer admin */
 .ua-btn-primary {
   background: linear-gradient(135deg, var(--pozovet-purple), var(--pozovet-magenta));
@@ -287,14 +313,16 @@
 
 /* Tarjeta */
 .ua-modal {
-  background: #ffffff;
-  border-radius: 1.25rem;
-  padding: 1.75rem 1.75rem 1.25rem;
-  max-width: 480px;
+  background: linear-gradient(145deg, #ffffff, #fdf7ff);
+  border-radius: 20px;
+  padding: 28px 32px;
   width: 100%;
-  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.35);
+  max-width: 480px;
+  border: 1px solid rgba(155, 28, 143, 0.15);
+  box-shadow: 0 24px 48px rgba(58, 33, 61, 0.25),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   position: relative;
-  animation: ua-modal-in 0.18s ease-out;
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Botón cerrar */
@@ -329,16 +357,29 @@
 }
 
 .ua-modal-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
+  margin: 0 0 12px 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--pozovet-dark);
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, var(--pozovet-purple), var(--pozovet-magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .ua-modal-subtitle {
-  font-size: 0.9rem;
-  color: #6b21a8; /* moradito admin pozovet vibes */
-  margin: 0.15rem 0 0;
+  margin: 0 0 28px 0;
+  font-size: 0.95rem;
+  color: #6f5979;
+  line-height: 1.5;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(155, 28, 143, 0.1);
+}
+
+.ua-modal-subtitle b {
+  color: var(--pozovet-purple);
+  font-weight: 700;
 }
 
 /* Cuerpo del modal */
@@ -548,6 +589,63 @@
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
+.ua-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ua-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--pozovet-dark);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ua-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid rgba(155, 28, 143, 0.25);
+  border-radius: 14px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--pozovet-dark);
+  transition: all 0.25s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239b1c8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  padding-right: 48px;
+}
+
+.ua-input:focus {
+  outline: none;
+  border-color: var(--pozovet-magenta);
+  box-shadow: 0 0 0 4px rgba(216, 27, 96, 0.15),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  background-color: white;
+}
+
+.ua-input:hover {
+  border-color: var(--pozovet-teal);
+}
+
+/* Botones del modal */
+.ua-form-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(155, 28, 143, 0.1);
+}
+
+
+
 /* Hover */
 .ua-select-group select:hover,
 .ua-modal-body input[type="text"]:hover {
@@ -691,3 +789,4 @@
   color: #ffffff;
   box-shadow: 0 4px 10px rgba(155, 28, 143, 0.35);
 }
+

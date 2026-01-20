@@ -297,12 +297,10 @@ def doctores_list(request):
 @permission_classes([IsAuthenticated])
 def usuarios_doctores(request):
     """
-    Lista de doctores para agendar citas.
-    Incluye Veterinarios (rol 4).
-    (Opcional) Incluye Admin (rol 1) si también atiende citas.
+    Lista simple de doctores (para dropdowns si la usas).
+    Recomendado: Veterinarios (rol 4) y (opcional) Admin (rol 1).
     """
-
-    roles_doctor = [ROLE_VETERINARIO, ROLE_ADMIN]  # <- si NO quieres admin, deja solo [ROLE_VETERINARIO]
+    roles_doctor = [ROLE_VETERINARIO, ROLE_ADMIN]  # o solo [ROLE_VETERINARIO]
 
     doctores = (
         Usuario.objects
@@ -322,3 +320,67 @@ def usuarios_doctores(request):
     ]
     return Response(data, status=status.HTTP_200_OK)
 
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def usuarios_doctores(request):
+    """
+    Lista de doctores para agendar citas (visible para cualquier usuario logueado).
+    Incluye: Admin, Recepcionista y Veterinario (ajusta si quieres solo Veterinario/Admin).
+    """
+    doctores = (
+        Usuario.objects
+        .filter(id_rol__id_rol__in=[ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO])
+        .order_by("nombre", "apellido")
+    )
+
+    data = [
+        {
+            "id_usuario": d.id_usuario,
+            "nombre": d.nombre,
+            "apellido": d.apellido,
+            "correo": d.correo,
+            "id_rol": d.id_rol.id_rol if d.id_rol else None,
+        }
+        for d in doctores
+    ]
+    return Response(data, status=status.HTTP_200_OK)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def doctores_por_actividad_view(request, id_actividad):
+    """
+    Doctores disponibles por especialidad (Actividad).
+    Visible para cualquier usuario logueado.
+    """
+    rels = (
+        DoctorActividad.objects
+        .filter(id_actividad_id=id_actividad)
+        .select_related("doctor", "doctor__id_rol")
+    )
+
+    allowed = {ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO}
+
+    # deduplicar por id_usuario
+    seen = set()
+    data = []
+    for r in rels:
+        d = r.doctor
+        if not d:
+            continue
+        rid = d.id_rol.id_rol if d.id_rol else None
+        if rid not in allowed:
+            continue
+        if d.id_usuario in seen:
+            continue
+        seen.add(d.id_usuario)
+
+        data.append({
+            "id_usuario": d.id_usuario,
+            "nombre": d.nombre,
+            "apellido": d.apellido,
+            "correo": d.correo,
+            "id_rol": rid,
+        })
+
+    return Response(data, status=status.HTTP_200_OK)
