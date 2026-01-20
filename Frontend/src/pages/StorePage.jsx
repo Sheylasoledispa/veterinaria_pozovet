@@ -11,11 +11,18 @@ const PLACEHOLDER = "https://via.placeholder.com/600x360?text=PozoVet";
 
 const StorePage = () => {
   const { usuario } = useAuth();
+
+  const ROLE_ADMIN = 1;
+const ROLE_RECEPCIONISTA = 3;
+
+const roleId =
+  typeof usuario?.id_rol === "object" ? usuario?.id_rol?.id_rol : usuario?.id_rol;
+
+const canManageProducts = [ROLE_ADMIN, ROLE_RECEPCIONISTA].includes(Number(roleId));
+
+
   const { addToCart } = useCart();
 
-  const roleId =
-    typeof usuario?.id_rol === "object" ? usuario?.id_rol?.id_rol : usuario?.id_rol;
-  const isAdmin = Number(roleId) === 1;
 
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -85,7 +92,7 @@ const StorePage = () => {
     try {
       setLoading(true);
       setError("");
-      const endpoint = isAdmin ? "/productos/admin/" : "/productos/";
+      const endpoint = canManageProducts ? "/productos/admin/" : "/productos/";
       const { data } = await api.get(endpoint);
       setProductos(data || []);
     } catch (e) {
@@ -99,7 +106,7 @@ const StorePage = () => {
   useEffect(() => {
     fetchProductos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin]);
+  }, [canManageProducts]);
 
   // limpiar preview al desmontar / cambiar
   useEffect(() => {
@@ -369,7 +376,7 @@ const StorePage = () => {
               <p className="store-subtitle">Productos disponibles en venta.</p>
             </div>
 
-            {isAdmin && (
+            {canManageProducts && (
               <button type="button" className="store-admin-btn" onClick={abrirCrearProducto}>
                 + Agregar producto
               </button>
@@ -430,52 +437,55 @@ const StorePage = () => {
                       <span className={`store-badge ${getStockClass(p.stock_producto)}`}>
                         {getDisponibilidad(p.stock_producto)}
                       </span>
-                      {isAdmin && p.stock_producto !== undefined && (
-                        <span className="store-stock-number">
-                          ({p.stock_producto} unidades)
-                        </span>
-                      )}
+                      <span className="store-stock-number">
+                        (Stock: {p.stock_producto ?? 0})
+                      </span>
                     </div>
                   </div>
 
                   {/* ✅ Botones según el rol - SOLO UN BLOQUE */}
-                  {isAdmin ? (
-                    <div className="store-card-actions">
-                      <button
-                        type="button"
-                        className="store-card-btn"
-                        onClick={() => abrirEditarProducto(p)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="store-card-btn store-card-btn-danger"
-                        onClick={() => abrirEliminarProducto(p)}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  ) : (
-                    // Botón de agregar al carrito para clientes
-                    <div className="store-card-actions">
-                      <button
-                        type="button"
-                        className="store-card-btn store-card-btn-add"
-                        disabled={p.stock_producto === 0 || !usuario}
-                        onClick={() => {
-                          if (!usuario) {
-                            alert('Debes iniciar sesión para agregar productos al carrito');
-                          } else {
-                            addToCart(p);
-                          }
-                        }}
-                      >
-                        {p.stock_producto === 0 ? 'Agotado' :
-                          !usuario ? 'Inicia sesión para comprar' : 'Agregar al carrito'}
-                      </button>
-                    </div>
-                  )}
+                  <div className="store-card-actions">
+                    {/* Comprar (todos los roles logueados, incluyendo admin/recepcionista) */}
+                    <button
+                      type="button"
+                      className="store-card-btn store-card-btn-add"
+                      disabled={p.stock_producto === 0 || !usuario}
+                      onClick={() => {
+                        if (!usuario) {
+                          alert("Debes iniciar sesión para agregar productos al carrito");
+                        } else {
+                          addToCart(p);
+                        }
+                      }}
+                    >
+                      {p.stock_producto === 0
+                        ? "Agotado"
+                        : !usuario
+                        ? "Inicia sesión para comprar"
+                        : "Agregar al carrito"}
+                    </button>
+
+                    {/* Gestionar (solo admin o recepcionista) */}
+                    {canManageProducts && (
+                      <>
+                        <button
+                          type="button"
+                          className="store-card-btn"
+                          onClick={() => abrirEditarProducto(p)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="store-card-btn store-card-btn-danger"
+                          onClick={() => abrirEliminarProducto(p)}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
+                  </div>
+
                 </div>
               </article>
             ))}
@@ -484,7 +494,7 @@ const StorePage = () => {
       </main>
 
       {/* ✅ MODAL ADMIN: Crear producto */}
-      {isAdmin && isCreateOpen && (
+      {canManageProducts && isCreateOpen && (
         <div className="store-modal-backdrop" onClick={cerrarCrearProducto}>
           <div className="store-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="store-modal-title">Nuevo producto</h3>
@@ -587,7 +597,7 @@ const StorePage = () => {
       )}
 
       {/* ✅ MODAL ADMIN: Editar producto */}
-      {isAdmin && isEditOpen && editProducto && (
+      {canManageProducts && isEditOpen && editProducto && (
         <div className="store-modal-backdrop" onClick={cerrarEditarProducto}>
           <div className="store-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="store-modal-title">Editar producto</h3>
@@ -697,7 +707,7 @@ const StorePage = () => {
       )}
 
       {/* ✅ MODAL PEQUEÑO: Confirmar eliminación */}
-      {isAdmin && isDeleteOpen && (
+      {canManageProducts && isDeleteOpen && (
         <div className="store-modal-backdrop" onClick={cerrarEliminarProducto}>
           <div
             className="store-modal store-modal-sm store-modal-danger"

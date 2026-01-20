@@ -6,14 +6,13 @@ import "../styles/ConsultasAdmin.css";
 
 const ConsultasAdminPage = () => {
   const [turnos, setTurnos] = useState([]);
+  const [filteredTurnos, setFilteredTurnos] = useState([]);
   const [loadingTurnos, setLoadingTurnos] = useState(false);
   const [turnosError, setTurnosError] = useState("");
 
   // Modal y consulta
   const [selectedTurno, setSelectedTurno] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Nuevo estado para el modal de confirmación de cancelar turno
   const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
 
   const [consultaForm, setConsultaForm] = useState({
@@ -26,6 +25,25 @@ const ConsultasAdminPage = () => {
   const [loadingConsulta, setLoadingConsulta] = useState(false);
   const [consultaError, setConsultaError] = useState("");
   const [consultaInfo, setConsultaInfo] = useState("");
+
+  // Estados para filtros simples
+  const [doctores, setDoctores] = useState([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedEstado, setSelectedEstado] = useState("");
+
+  // Cargar lista de doctores
+  useEffect(() => {
+    const cargarDoctores = async () => {
+      try {
+        const res = await api.get("/usuarios/doctores/");
+        setDoctores(res.data || []);
+      } catch (err) {
+        console.error("Error cargando doctores:", err);
+      }
+    };
+    cargarDoctores();
+  }, []);
 
   const cargarTurnos = async () => {
     try {
@@ -44,6 +62,49 @@ const ConsultasAdminPage = () => {
   useEffect(() => {
     cargarTurnos();
   }, []);
+
+  // Aplicar filtros combinados cuando cambien los filtros
+  useEffect(() => {
+    let result = [...turnos];
+
+    // Filtrar por doctor - busco por nombre y apellido si no hay id_doctor
+    if (selectedDoctorId) {
+      const doctorSeleccionado = doctores.find(d => d.id_usuario == selectedDoctorId);
+      if (doctorSeleccionado) {
+        result = result.filter(turno => {
+          // Intento varias formas de encontrar el doctor en el turno
+          const doctorNombreCompleto = `${turno.doctor_nombre || ""} ${turno.doctor_apellido || ""}`.toLowerCase().trim();
+          const doctorBusqueda = `${doctorSeleccionado.nombre || ""} ${doctorSeleccionado.apellido || ""}`.toLowerCase().trim();
+          
+          return doctorNombreCompleto === doctorBusqueda;
+        });
+      }
+    }
+
+    // Filtrar por fecha
+    if (selectedDate) {
+      result = result.filter(turno => turno.fecha_turno === selectedDate);
+    }
+
+    // Filtrar por estado del turno
+    if (selectedEstado && selectedEstado !== "todos") {
+      result = result.filter(turno => {
+        const estado = (turno.estado_descripcion || "").toLowerCase();
+        const tieneConsulta = turno.tiene_consulta;
+        
+        if (selectedEstado === "pendiente") {
+          return !tieneConsulta && estado !== "cancelada";
+        } else if (selectedEstado === "atendido") {
+          return tieneConsulta && estado !== "cancelada";
+        } else if (selectedEstado === "cancelado") {
+          return estado === "cancelada";
+        }
+        return true;
+      });
+    }
+
+    setFilteredTurnos(result);
+  }, [turnos, selectedDoctorId, selectedDate, selectedEstado, doctores]);
 
   const abrirModalConsulta = async (turno) => {
     setSelectedTurno(turno);
@@ -68,7 +129,6 @@ const ConsultasAdminPage = () => {
       setConsultaExists(true);
     } catch (err) {
       console.error(err);
-      // Si no hay consulta (404), lo tomamos como "nueva consulta"
       if (err.response && err.response.status === 404) {
         setConsultaExists(false);
       } else {
@@ -105,16 +165,14 @@ const ConsultasAdminPage = () => {
       const payload = { ...consultaForm };
 
       if (consultaExists) {
-        // Actualizar
         await api.put(`/consultas/por-turno/${selectedTurno.id_turno}/`, payload);
       } else {
-        // Crear
         await api.post(`/consultas/por-turno/${selectedTurno.id_turno}/`, payload);
         setConsultaExists(true);
       }
 
       setConsultaInfo("Consulta guardada correctamente.");
-      await cargarTurnos(); // refresca lista
+      await cargarTurnos();
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 403) {
@@ -127,11 +185,9 @@ const ConsultasAdminPage = () => {
     }
   };
 
-  // ✅ NUEVO: Cancelar turno
   const cancelarTurno = async () => {
     if (!selectedTurno) return;
-
-    setIsConfirmCancelOpen(true); // Abrir el modal de confirmación
+    setIsConfirmCancelOpen(true);
   };
 
   const confirmCancelTurno = async () => {
@@ -143,9 +199,8 @@ const ConsultasAdminPage = () => {
       await api.patch(`/turnos/${selectedTurno.id_turno}/cancelar/`);
 
       setConsultaInfo("Turno cancelado correctamente.");
-      await cargarTurnos(); // refresca lista
+      await cargarTurnos();
 
-      // actualizar selectedTurno en el modal (para que muestre cancelada si sigues abierto)
       setSelectedTurno((prev) =>
         prev ? { ...prev, estado_descripcion: "Cancelada" } : prev
       );
@@ -154,17 +209,23 @@ const ConsultasAdminPage = () => {
       setConsultaError(err?.response?.data?.error || "No se pudo cancelar el turno.");
     } finally {
       setLoadingConsulta(false);
-      setIsConfirmCancelOpen(false); // Cerrar el modal de confirmación
+      setIsConfirmCancelOpen(false);
     }
   };
 
   const cancelarConfirmacion = () => {
-    setIsConfirmCancelOpen(false); // Cerrar el modal de confirmación
+    setIsConfirmCancelOpen(false);
   };
 
-  const tituloTurnos = `Turnos registrados · ${turnos.length} turno${
-    turnos.length !== 1 ? "s" : ""
-  }`;
+  const limpiarFiltros = () => {
+    setSelectedDoctorId("");
+    setSelectedDate("");
+    setSelectedEstado("");
+  };
+
+  const tituloTurnos = `Turnos registrados · ${filteredTurnos.length} turno${
+    filteredTurnos.length !== 1 ? "s" : ""
+  } (Total: ${turnos.length})`;
 
   return (
     <>
@@ -181,7 +242,6 @@ const ConsultasAdminPage = () => {
               </p>
             </div>
 
-            {/* Leyenda pequeña de estados */}
             <div className="cp-legend">
               <div className="cp-legend-item">
                 <span className="cp-legend-dot cp-legend-dot-ok" />
@@ -194,6 +254,94 @@ const ConsultasAdminPage = () => {
             </div>
           </div>
 
+          {/* Sección de filtros simplificados */}
+          <div className="cp-filters-section">
+            <div className="cp-filters-grid">
+              {/* Filtro por doctor */}
+              <div className="cp-filter-group">
+                <label className="cp-filter-label">Doctor</label>
+                <select
+                  value={selectedDoctorId}
+                  onChange={(e) => setSelectedDoctorId(e.target.value)}
+                  className="cp-filter-select"
+                >
+                  <option value="">Todos los doctores</option>
+                  {doctores.map(doc => (
+                    <option key={doc.id_usuario} value={doc.id_usuario}>
+                      {doc.rol === "Veterinario" ? "Dr." : ""} {doc.nombre} {doc.apellido} ({doc.rol || "Sin rol"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por fecha */}
+              <div className="cp-filter-group">
+                <label className="cp-filter-label">Fecha</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="cp-filter-date"
+                />
+              </div>
+
+              {/* Filtro por estado */}
+              <div className="cp-filter-group">
+                <label className="cp-filter-label">Estado</label>
+                <select
+                  value={selectedEstado}
+                  onChange={(e) => setSelectedEstado(e.target.value)}
+                  className="cp-filter-select"
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="pendiente">Pendientes</option>
+                  <option value="atendido">Atendidos</option>
+                  <option value="cancelado">Cancelados</option>
+                </select>
+              </div>
+
+              {/* Botón para limpiar filtros */}
+              <div className="cp-filter-group">
+                <label className="cp-filter-label">&nbsp;</label>
+                <button
+                  type="button"
+                  onClick={limpiarFiltros}
+                  className="cp-btn cp-btn-outline cp-btn-filter"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            </div>
+
+            {/* Indicador visual de filtros activos */}
+            {(selectedDoctorId || selectedDate || selectedEstado) && (
+              <div className="cp-filters-active">
+                <span className="cp-filters-label">Filtros activos:</span>
+                {selectedDoctorId && (
+                  <span className="cp-filter-tag">
+                    Doctor: {doctores.find(d => d.id_usuario == selectedDoctorId)?.nombre || ""}
+                    <button onClick={() => setSelectedDoctorId("")}>×</button>
+                  </span>
+                )}
+                {selectedDate && (
+                  <span className="cp-filter-tag">
+                    Fecha: {selectedDate}
+                    <button onClick={() => setSelectedDate("")}>×</button>
+                  </span>
+                )}
+                {selectedEstado && (
+                  <span className="cp-filter-tag">
+                    Estado: {
+                      selectedEstado === "pendiente" ? "Pendientes" :
+                      selectedEstado === "atendido" ? "Atendidos" : "Cancelados"
+                    }
+                    <button onClick={() => setSelectedEstado("")}>×</button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="cp-summary">
             <span className="cp-pill">{tituloTurnos}</span>
           </div>
@@ -201,12 +349,16 @@ const ConsultasAdminPage = () => {
           {turnosError && <p className="cp-error">{turnosError}</p>}
           {loadingTurnos && <p className="cp-loading">Cargando turnos...</p>}
 
-          {!loadingTurnos && turnos.length === 0 && (
-            <p className="cp-empty">No hay turnos registrados todavía.</p>
+          {!loadingTurnos && filteredTurnos.length === 0 && (
+            <p className="cp-empty">
+              {turnos.length === 0 
+                ? "No hay turnos registrados todavía."
+                : "No hay turnos que coincidan con los filtros aplicados."}
+            </p>
           )}
 
           <div className="cp-list">
-            {turnos.map((t) => {
+            {filteredTurnos.map((t) => {
               const fechaStr = t.fecha_turno;
               const horaStr = t.hora_turno?.slice(0, 5) || "";
               const tieneConsulta = t.tiene_consulta;
@@ -217,6 +369,8 @@ const ConsultasAdminPage = () => {
                 "cp-turno-card " +
                 (tieneConsulta
                   ? "cp-turno-card-ok"
+                  : esCancelada
+                  ? "cp-turno-card-canceled"
                   : "cp-turno-card-pending");
 
               return (
@@ -246,8 +400,12 @@ const ConsultasAdminPage = () => {
 
                   <div className="cp-turno-meta">
                     {/* Estado */}
-                    <span className="cp-chip cp-chip-estado">
-                      {t.estado_descripcion || "Sin estado"}
+                    <span className={`cp-chip cp-chip-estado ${
+                      esCancelada ? "cp-chip-estado-cancelada" : 
+                      tieneConsulta ? "cp-chip-estado-atendida" : 
+                      "cp-chip-estado-pendiente"
+                    }`}>
+                      {t.estado_descripcion || "Pendiente"}
                     </span>
 
                     <span
@@ -384,7 +542,6 @@ const ConsultasAdminPage = () => {
                   Cerrar
                 </button>
 
-                {/* ✅ Botón cancelar turno */}
                 <button
                   type="button"
                   className="cp-btn cp-btn-outline"
@@ -401,7 +558,6 @@ const ConsultasAdminPage = () => {
                   Cancelar turno
                 </button>
 
-                {/* Guardar consulta */}
                 <button
                   type="button"
                   className="cp-btn cp-btn-primary"

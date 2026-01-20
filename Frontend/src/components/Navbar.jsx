@@ -42,9 +42,14 @@ const Navbar = () => {
     idRol === roles.VETERINARIO ||
     idRol === roles.RECEPCIONISTA;
 
-  const canViewConsultas = idRol === roles.ADMIN;
+  const canViewConsultas = 
+     idRol === roles.ADMIN ||
+     idRol === roles.VETERINARIO ||
+     idRol === roles.RECEPCIONISTA;
 
-  const canManageUsers = idRol === roles.ADMIN;
+  const canManageUsers = 
+     idRol === roles.ADMIN ||
+     idRol === roles.RECEPCIONISTA;
 
   const handleLogout = () => {
     logout();

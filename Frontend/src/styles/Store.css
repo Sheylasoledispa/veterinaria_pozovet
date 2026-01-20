@@ -751,3 +751,36 @@
   padding: 16px;
   border-radius: 16px;
 }
+
+
+
+/* === STOCK visible para todos === */
+.store-stock-number{
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-left: 10px;
+}
+
+/* === Acciones: comprar + editar + eliminar === */
+.store-card-actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.store-card-btn{
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+/* botón comprar un poquito más protagonista */
+.store-card-btn-add{
+  flex: 1 1 180px;
+}
+
+/* editar / eliminar más compactos */
+.store-card-btn:not(.store-card-btn-add){
+  flex: 0 0 auto;
+}
