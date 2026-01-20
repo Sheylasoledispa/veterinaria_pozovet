@@ -721,3 +721,37 @@
   background: rgba(155, 28, 143, 0.08);
   border-radius: 999px;
 }
+
+
+
+
+/* ✅ Botonera de tarjeta mascotas (2 botones en fila) */
+.dash-card-btn-row{
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ✅ Botón eliminar en tarjeta */
+.dash-card-btn-danger{
+  border-color: rgba(229, 57, 53, 0.45);
+  color: #c62828;
+}
+
+.dash-card-btn-danger:hover{
+  border-color: rgba(229, 57, 53, 0.7);
+}
+
+/* ✅ Texto modal eliminar */
+.dash-delete-hint{
+  margin: 0 0 0.8rem;
+  font-size: 0.9rem;
+  color: #6d5477;
+}
+
+/* ✅ Botón eliminar (modal) */
+.dash-btn-danger{
+  background: linear-gradient(135deg, #e53935, #ff5a5a);
+  box-shadow: 0 6px 16px rgba(229, 57, 53, 0.35);
+}
