@@ -11,6 +11,8 @@ from .models import (
     Compra,
     Detalle_compra,
     HistorialUsuario,  
+    Reserva,
+    DetalleReserva,
 )
 
 
@@ -234,3 +236,101 @@ class HistorialUsuarioSerializer(serializers.ModelSerializer):
         return None
 
 
+class DetalleReservaSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source='id_producto.nombre_producto', read_only=True)
+    producto_imagen = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = DetalleReserva
+        fields = ['id_detalle', 'id_producto', 'producto_nombre', 'producto_imagen', 
+                 'cantidad', 'precio_unitario', 'subtotal']
+    
+    def get_producto_imagen(self, obj):
+        if obj.id_producto.URL_imagen:
+            return obj.id_producto.URL_imagen.url
+        return None
+
+
+class ReservaSerializer(serializers.ModelSerializer):
+    detalles = DetalleReservaSerializer(many=True, read_only=True)
+    usuario_nombre = serializers.CharField(source='id_usuario.nombre', read_only=True)
+    usuario_apellido = serializers.CharField(source='id_usuario.apellido', read_only=True)
+    usuario_cedula = serializers.CharField(source='id_usuario.cedula', read_only=True)
+    usuario_correo = serializers.CharField(source='id_usuario.correo', read_only=True)
+    usuario_telefono = serializers.CharField(source='id_usuario.telefono', read_only=True)
+    usuario_direccion = serializers.CharField(source='id_usuario.direccion', read_only=True)
+    estado_descripcion = serializers.CharField(source='id_estado.descripcion_estado', read_only=True)
+    
+    class Meta:
+        model = Reserva
+        fields = ['id_reserva', 'codigo_factura', 'fecha_reserva', 'fecha_entrega_estimada',
+                 'total_reserva', 'id_estado', 'estado_descripcion', 'observaciones',
+                 'usuario_nombre', 'usuario_apellido', 'usuario_cedula', 'usuario_correo',
+                 'usuario_telefono', 'usuario_direccion', 'detalles']
+
+
+class CrearReservaSerializer(serializers.Serializer):
+    # Este serializador es para crear una nueva reserva
+    detalles = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.IntegerField()
+        )
+    )
+    observaciones = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate_detalles(self, value):
+        if not value:
+            raise serializers.ValidationError("La reserva debe contener al menos un producto")
+        
+        for detalle in value:
+            if 'id_producto' not in detalle or 'cantidad' not in detalle:
+                raise serializers.ValidationError("Cada detalle debe tener id_producto y cantidad")
+            
+            try:
+                producto = Producto.objects.get(id_producto=detalle['id_producto'])
+                if producto.stock_producto < detalle['cantidad']:
+                    raise serializers.ValidationError(
+                        f"Stock insuficiente para {producto.nombre_producto}"
+                    )
+            except Producto.DoesNotExist:
+                raise serializers.ValidationError("Producto no encontrado")
+        
+        return value
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        
+        # Calcular total
+        total = 0
+        detalles_data = validated_data['detalles']
+        
+        for detalle in detalles_data:
+            producto = Producto.objects.get(id_producto=detalle['id_producto'])
+            total += producto.precio_producto * detalle['cantidad']
+        
+        # Crear reserva
+        reserva = Reserva.objects.create(
+            id_usuario=user,
+            total_reserva=total,
+            id_estado_id=1,  # Estado "Pendiente"
+            observaciones=validated_data.get('observaciones', '')
+        )
+        
+        # Crear detalles y reducir stock
+        for detalle in detalles_data:
+            producto = Producto.objects.get(id_producto=detalle['id_producto'])
+            
+            DetalleReserva.objects.create(
+                id_reserva=reserva,
+                id_producto=producto,
+                cantidad=detalle['cantidad'],
+                precio_unitario=producto.precio_producto,
+                subtotal=producto.precio_producto * detalle['cantidad']
+            )
+            
+            # Reducir stock
+            producto.stock_producto -= detalle['cantidad']
+            producto.save()
+        
+        return reserva

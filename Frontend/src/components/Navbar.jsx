@@ -2,12 +2,26 @@ import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import logoPozovet from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext";
+import CartIcon from './CartIcon';
+import CartModal from './CartModal';
 
 const Navbar = () => {
   const { token, usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   const isLogged = !!token;
+  
+  // Obtener el id_rol correctamente (puede ser objeto o número)
+  const getIdRol = () => {
+    if (!usuario) return null;
+    if (typeof usuario.id_rol === 'object') {
+      return usuario.id_rol.id_rol;
+    }
+    return usuario.id_rol;
+  };
+  
+  const idRol = getIdRol();
+  const isAdmin = idRol === 1;
 
   const handleLogout = () => {
     logout();
@@ -52,19 +66,13 @@ const Navbar = () => {
                 Inicio
               </Link>
 
-              {/* ✅ SOLO CAMBIO: Tienda con nav-link */}
-              {usuario && (
-                <Link to="/tienda" className="nav-link">
-                  Tienda
-                </Link>
-              )}
+              {/* Tienda para todos los usuarios logueados */}
+              <Link to="/tienda" className="nav-link">
+                Tienda
+              </Link>
 
-              {usuario?.id_rol?.id_rol === 1 && (
-                <Link to="/admin/productos">Productos</Link>
-              )}
-
-              {/* SOLO ADMIN */}
-              {usuario?.id_rol === 1 && (
+              {/* SOLO ADMIN - Panel de administración */}
+              {isAdmin && (
                 <>
                   <Link to="/admin/users" className="nav-link">
                     Usuarios
@@ -89,10 +97,18 @@ const Navbar = () => {
               >
                 Cerrar sesión
               </button>
+              
+              {/* Icono del carrito separado del botón cerrar sesión */}
+              <div className="cart-icon-separator">
+                <CartIcon />
+              </div>
             </>
           )}
         </div>
       </nav>
+      
+      {/* Modal del carrito (se renderiza fuera del nav) */}
+      <CartModal />
     </header>
   );
 };

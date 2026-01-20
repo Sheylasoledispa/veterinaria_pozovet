@@ -4,12 +4,14 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import "../styles/Store.css";
 
 const PLACEHOLDER = "https://via.placeholder.com/600x360?text=PozoVet";
 
 const StorePage = () => {
   const { usuario } = useAuth();
+  const { addToCart } = useCart();
 
   const roleId =
     typeof usuario?.id_rol === "object" ? usuario?.id_rol?.id_rol : usuario?.id_rol;
@@ -210,7 +212,7 @@ const StorePage = () => {
       fd.append("precio_producto", String(nuevoProducto.precio_producto).replace(",", "."));
       fd.append("stock_producto", String(nuevoProducto.stock_producto));
       fd.append("descripcion_producto", nuevoProducto.descripcion_producto?.trim() || "");
-      
+
       if (imgFile) fd.append("URL_imagen", imgFile);
 
       await api.post("/productos/", fd, {
@@ -422,7 +424,7 @@ const StorePage = () => {
 
                   <div className="store-card-footer">
                     <span className="store-price">${String(p.precio_producto)}</span>
-                    
+
                     {/* ✅ Mostrar stock y disponibilidad */}
                     <div className="store-stock-info">
                       <span className={`store-badge ${getStockClass(p.stock_producto)}`}>
@@ -436,24 +438,54 @@ const StorePage = () => {
                     </div>
                   </div>
 
-                  {isAdmin && (
-                    <div className="store-card-actions">
-                      <button
-                        type="button"
-                        className="store-card-btn"
-                        onClick={() => abrirEditarProducto(p)}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        className="store-card-btn store-card-btn-danger"
-                        onClick={() => abrirEliminarProducto(p)}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  )}
+                  {/* ✅ Botones según el rol - TODOS VEN EL BOTÓN DE CARRITO */}
+                  <div className="store-card-actions">
+                    {isAdmin && (
+                      <>
+                        <button
+                          type="button"
+                          className="store-card-btn"
+                          onClick={() => abrirEditarProducto(p)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="store-card-btn store-card-btn-danger"
+                          onClick={() => abrirEliminarProducto(p)}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
+
+                    {/* Botón de agregar al carrito para TODOS los roles */}
+                    <button
+                      type="button"
+                      className="store-card-btn store-card-btn-add"
+                      disabled={isAdmin || p.stock_producto === 0 || !usuario}
+                      onClick={() => {
+                        if (isAdmin) {
+                          alert('Los administradores no pueden agregar productos al carrito');
+                        } else if (!usuario) {
+                          alert('Debes iniciar sesión para agregar productos al carrito');
+                        } else if (p.stock_producto === 0) {
+                          alert('Producto agotado');
+                        } else {
+                          addToCart(p);
+                        }
+                      }}
+                    >
+                      {isAdmin 
+                        ? 'Agregar a Carrito' 
+                        : p.stock_producto === 0 
+                          ? 'Agotado' 
+                          : !usuario 
+                            ? 'Inicia sesión para comprar' 
+                            : 'Agregar al carrito'
+                      }
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -512,11 +544,6 @@ const StorePage = () => {
                     min="0"
                     required
                   />
-                  <small className="store-field-hint">
-                    {nuevoProducto.stock_producto > 0 
-                      ? "✓ Producto visible en tienda" 
-                      : "⚠ Producto aparecerá como agotado"}
-                  </small>
                 </div>
               </div>
 
@@ -620,11 +647,6 @@ const StorePage = () => {
                     min="0"
                     required
                   />
-                  <small className="store-field-hint">
-                    {editProducto.stock_producto > 0 
-                      ? "✓ Producto visible en tienda" 
-                      : "⚠ Producto aparecerá como agotado"}
-                  </small>
                 </div>
               </div>
 

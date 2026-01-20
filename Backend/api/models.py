@@ -352,3 +352,112 @@ class DoctorActividad(models.Model):
         db_table = "Doctor_Actividad"
         unique_together = ("doctor", "actividad")
 
+
+# Añade después del modelo DoctorActividad
+
+class Reserva(models.Model):
+    id_reserva = models.AutoField(primary_key=True)
+    
+    # Cliente que hace la reserva
+    id_usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        db_column="id_usuario",
+        related_name="reservas",
+    )
+    
+    # Datos de la reserva
+    fecha_reserva = models.DateTimeField(auto_now_add=True)
+    fecha_entrega_estimada = models.DateTimeField(null=True, blank=True)
+    total_reserva = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Estado de la reserva (debes crear estos estados en tu tabla Estado)
+    # 1 = Pendiente, 2 = Confirmada, 3 = Completada, 4 = Cancelada
+    id_estado = models.ForeignKey(
+        Estado,
+        on_delete=models.PROTECT,
+        db_column="id_estado",
+        related_name="reservas",
+        default=1  # Por defecto Pendiente
+    )
+    
+    # Información adicional para la factura
+    codigo_factura = models.CharField(max_length=20, unique=True)
+    observaciones = models.TextField(null=True, blank=True)
+    
+    # Auditoría
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True, null=True, blank=True)
+    id_usuario_creacion = models.IntegerField(null=True, blank=True)
+    id_usuario_actualizacion = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = "Reserva"
+        ordering = ['-fecha_reserva']
+
+    def __str__(self):
+        return f"Reserva {self.codigo_factura} - {self.id_usuario.nombre}"
+
+    def save(self, *args, **kwargs):
+        if not self.codigo_factura:
+            # Generar código único: FAC-20250120-001
+            from datetime import datetime
+            prefix = "FAC-"
+            date_str = datetime.now().strftime("%Y%m%d")
+            
+            # Buscar última reserva del día
+            last_reserva = Reserva.objects.filter(
+                codigo_factura__startswith=f"{prefix}{date_str}-"
+            ).order_by('-codigo_factura').first()
+            
+            if last_reserva:
+                last_num = int(last_reserva.codigo_factura.split('-')[-1])
+                new_num = last_num + 1
+            else:
+                new_num = 1
+                
+            self.codigo_factura = f"{prefix}{date_str}-{new_num:03d}"
+        super().save(*args, **kwargs)
+
+
+class DetalleReserva(models.Model):
+    id_detalle = models.AutoField(primary_key=True)
+    
+    # Relación con la reserva
+    id_reserva = models.ForeignKey(
+        Reserva,
+        on_delete=models.CASCADE,
+        db_column="id_reserva",
+        related_name="detalles",
+    )
+    
+    # Producto reservado
+    id_producto = models.ForeignKey(
+        Producto,
+        on_delete=models.PROTECT,
+        db_column="id_producto",
+        related_name="reservas_detalle",
+    )
+    
+    # Detalles de la reserva
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Auditoría
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True, null=True, blank=True)
+    id_usuario_creacion = models.IntegerField(null=True, blank=True)
+    id_usuario_actualizacion = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = "DetalleReserva"
+
+    def __str__(self):
+        return f"Detalle {self.id_detalle} - {self.id_producto.nombre_producto}"
+    
+    def save(self, *args, **kwargs):
+        # Calcular subtotal automáticamente
+        if self.precio_unitario and self.cantidad:
+            self.subtotal = self.precio_unitario * self.cantidad
+        super().save(*args, **kwargs)
