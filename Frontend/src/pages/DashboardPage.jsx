@@ -426,7 +426,7 @@ const confirmarEliminarMascota = async () => {
                 className="dash-card-btn dash-card-btn-outline"
                 onClick={abrirHistorialModal}
               >
-                Ver mis citas
+                Ver citas
               </button>
             </div>
 
