@@ -297,14 +297,28 @@ def doctores_list(request):
 @permission_classes([IsAuthenticated])
 def usuarios_doctores(request):
     """
-    Doctores = Veterinarios (rol 4)
+    Lista de doctores para agendar citas.
+    Incluye Veterinarios (rol 4).
+    (Opcional) Incluye Admin (rol 1) si también atiende citas.
     """
-    if not _is_admin(request.user):
-        return Response({"detail": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
 
-    doctores = Usuario.objects.filter(id_rol__id_rol=ROLE_VETERINARIO).values(
-        "id_usuario", "nombre", "apellido", "correo"
+    roles_doctor = [ROLE_VETERINARIO, ROLE_ADMIN]  # <- si NO quieres admin, deja solo [ROLE_VETERINARIO]
+
+    doctores = (
+        Usuario.objects
+        .filter(id_rol__id_rol__in=roles_doctor)
+        .order_by("nombre", "apellido")
     )
-    return Response(list(doctores), status=status.HTTP_200_OK)
 
+    data = [
+        {
+            "id_usuario": d.id_usuario,
+            "nombre": d.nombre,
+            "apellido": d.apellido,
+            "correo": d.correo,
+            "id_rol": d.id_rol.id_rol if d.id_rol else None,
+        }
+        for d in doctores
+    ]
+    return Response(data, status=status.HTTP_200_OK)
 
