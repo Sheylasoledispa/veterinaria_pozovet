@@ -1,129 +1,154 @@
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import '../styles/CartModal.css';
+import { useState } from "react";
+import api from "../api";
+import { useCart } from "../context/CartContext";
+import "../styles/CartModal.css";
 
 const CartModal = () => {
-  const { cart, removeFromCart, updateQuantity, clearCart, calculateTotal, showCartModal, closeCartModal } = useCart();
-  const { usuario } = useAuth();
+  const {
+    cartItems,
+    showCart,
+    toggleCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    cartTotal,
+  } = useCart();
 
-  // Solo mostrar a clientes (no admins)
-  if (!showCartModal || !usuario) return null;
+  const [observaciones, setObservaciones] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [msgError, setMsgError] = useState("");
+  const [msgOk, setMsgOk] = useState("");
 
-  // Obtener el id_rol correctamente
-  const getIdRol = () => {
-    if (!usuario) return null;
-    if (typeof usuario.id_rol === 'object') return usuario.id_rol.id_rol;
-    return usuario.id_rol;
+  const closeModal = () => {
+    setMsgError("");
+    setMsgOk("");
+    setObservaciones("");
+    toggleCart();
   };
 
-  const idRol = getIdRol();
-  const isAdmin = idRol === 1;
-  if (isAdmin) return null;
+  const confirmarReserva = async () => {
+    if (!cartItems.length) return;
 
-  const handleCheckout = () => {
-    alert('Funcionalidad de pago en desarrollo');
+    try {
+      setConfirming(true);
+      setMsgError("");
+      setMsgOk("");
+
+      const payload = {
+        observaciones: (observaciones || "").trim(),
+        items: cartItems.map((p) => ({
+          id_producto: p.id_producto,
+          cantidad: p.cantidad,
+        })),
+      };
+
+      const { data } = await api.post("/reservas/", payload);
+
+      setMsgOk(`✅ Reserva creada: ${data.codigo_factura}`);
+      clearCart();
+    } catch (err) {
+      console.error(err);
+      const detail =
+        err?.response?.data?.detail ||
+        "No se pudo confirmar la reserva. Revisa stock/campos.";
+      setMsgError(detail);
+    } finally {
+      setConfirming(false);
+    }
   };
+
+  if (!showCart) return null;
 
   return (
-    <>
-      {showCartModal && (
-        <div className="cart-modal-backdrop" onClick={closeCartModal}>
-          <div className="cart-modal" onClick={e => e.stopPropagation()}>
-            <header className="cart-modal-header">
-              <h2 className="cart-modal-title">Carrito de Compras</h2>
-              <button className="cart-modal-close" onClick={closeCartModal}>x</button>
-            </header>
-            
-            <div className="cart-modal-body">
-              {cart.length === 0 ? (
-                <div className="cart-empty">
-                  <p>Tu carrito está vacío</p>
-                  <button className="cart-btn-continue" onClick={closeCartModal}>
-                    Seguir comprando
+    <div className="cart-modal-overlay" onClick={closeModal}>
+      <div className="cart-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="cart-modal-header">
+          <h2>Confirmar Reserva</h2>
+          <button className="cart-close-btn" onClick={closeModal}>
+            ×
+          </button>
+        </div>
+
+        {cartItems.length === 0 ? (
+          <p className="cart-empty">Tu carrito está vacío</p>
+        ) : (
+          <>
+            <div className="cart-items">
+              {cartItems.map((item) => (
+                <div key={item.id_producto} className="cart-item">
+                  <img
+                    src={item.imagen || "https://via.placeholder.com/80"}
+                    alt={item.nombre}
+                    className="cart-item-image"
+                  />
+
+                  <div className="cart-item-info">
+                    <h3>{item.nombre}</h3>
+                    <p className="cart-item-price">${item.precio}</p>
+
+                    <div className="cart-item-controls">
+                      <button
+                        onClick={() => updateQuantity(item.id_producto, item.cantidad - 1)}
+                        disabled={item.cantidad <= 1}
+                      >
+                        -
+                      </button>
+
+                      <span>{item.cantidad}</span>
+
+                      <button
+                        onClick={() => updateQuantity(item.id_producto, item.cantidad + 1)}
+                        disabled={item.cantidad >= item.stock_disponible}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <p className="cart-item-subtotal">
+                      Subtotal: ${(Number(item.precio) * item.cantidad).toFixed(2)}
+                    </p>
+                  </div>
+
+                  <button
+                    className="cart-remove-btn"
+                    onClick={() => removeFromCart(item.id_producto)}
+                  >
+                    🗑
                   </button>
                 </div>
-              ) : (
-                <>
-                  <div className="cart-items">
-                    {cart.map(item => (
-                      <div key={item.id_producto} className="cart-item">
-                        <div className="cart-item-image">
-                          <img 
-                            src={item.imagen} 
-                            alt={item.nombre}
-                            onError={e => {
-                              e.target.src = 'https://via.placeholder.com/150';
-                            }}
-                          />
-                        </div>
-                        
-                        <div className="cart-item-details">
-                          <h4>{item.nombre}</h4>
-                          <p className="cart-item-price">
-                            Precio: ${Number(item.precio).toFixed(2)}
-                          </p>
-                          
-                          <div className="cart-item-quantity">
-                            <button 
-                              className="cart-btn-quantity"
-                              onClick={() => updateQuantity(item.id_producto, item.cantidad - 1)}
-                            >
-                              -
-                            </button>
-                            <span>{item.cantidad}</span>
-                            <button 
-                              className="cart-btn-quantity"
-                              onClick={() => updateQuantity(item.id_producto, item.cantidad + 1)}
-                              disabled={item.cantidad >= item.stock_disponible}
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="cart-item-total">
-                          <p>${(Number(item.precio) * item.cantidad).toFixed(2)}</p>
-                          <button 
-                            className="cart-btn-remove"
-                            onClick={() => removeFromCart(item.id_producto)}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="cart-summary">
-                    <div className="cart-summary-row">
-                      <span>Subtotal:</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
-                    </div>
-                    <div className="cart-summary-row">
-                      <span>Envío:</span>
-                      <span>Gratis</span>
-                    </div>
-                    <div className="cart-summary-row cart-total">
-                      <span>Total:</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="cart-actions">
-                      <button className="cart-btn-clear" onClick={clearCart}>
-                        Vaciar carrito
-                      </button>
-                      <button className="cart-btn-checkout" onClick={handleCheckout}>
-                        Proceder al pago
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
+              ))}
             </div>
-          </div>
-        </div>
-      )}
-    </>
+
+            <div className="cart-observaciones">
+              <label>Observaciones (opcional)</label>
+              <textarea
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+                placeholder="Ej: Entregar en la tarde, preferencia de marca, etc."
+                rows={3}
+              />
+            </div>
+
+            {msgError && <p className="cart-error">{msgError}</p>}
+            {msgOk && <p className="cart-success">{msgOk}</p>}
+
+            <div className="cart-modal-footer">
+              <div className="cart-total">
+                <strong>Total:</strong> ${cartTotal.toFixed(2)}
+              </div>
+
+              <button
+                className="cart-checkout-btn"
+                onClick={confirmarReserva}
+                disabled={confirming}
+              >
+                {confirming ? "Confirmando..." : "Confirmar Reserva"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

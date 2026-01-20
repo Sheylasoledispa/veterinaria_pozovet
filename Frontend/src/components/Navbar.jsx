@@ -70,6 +70,10 @@ const Navbar = () => {
               <Link to="/tienda" className="nav-link">
                 Tienda
               </Link>
+              {/* Facturas para todos los usuarios logueados */}
+              <Link to="/facturas" className="nav-link">
+                Facturas
+              </Link>
 
               {/* SOLO ADMIN - Panel de administración */}
               {isAdmin && (
@@ -98,17 +102,17 @@ const Navbar = () => {
                 Cerrar sesión
               </button>
               
-              {/* Icono del carrito separado del botón cerrar sesión */}
-              <div className="cart-icon-separator">
-                <CartIcon />
-              </div>
             </>
           )}
+
+           <div className="navbar-right">
+        <CartIcon />
+      </div>
+
+      {/* ✅ IMPORTANTÍSIMO: el modal debe estar renderizado */}
+      <CartModal />
         </div>
       </nav>
-      
-      {/* Modal del carrito (se renderiza fuera del nav) */}
-      <CartModal />
     </header>
   );
 };

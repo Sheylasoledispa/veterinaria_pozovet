@@ -5,6 +5,7 @@ from api.controllers.usuario_controller import historial_global_usuarios
 from .controllers.mascota_controller import mascotas_admin_create
 from .controllers.mascota_controller import mascotas_por_usuario
 from .controllers.turno_controller import turnos_list_create, turnos_del_dia
+from .controllers import reserva_controller
 from api.controllers.agenda_controller import (
     horarios_doctor_por_dia,
     toggle_horario_doctor,
@@ -91,5 +92,12 @@ urlpatterns = [
     path("productos/", producto_controller.productos_list_create),
     path("productos/admin/", producto_controller.productos_admin_list),
     path("productos/<int:pk>/", producto_controller.productos_detail),
+    
+    # RESERVAS
+    path("reservas/", reserva_controller.reservas_list_create),
+    path("reservas/admin/", reserva_controller.reservas_admin_list),
+    path("reservas/<int:id_reserva>/estado/", reserva_controller.reserva_actualizar_estado),
+    path("reservas/<int:id_reserva>/factura/", reserva_controller.reserva_factura_pdf),
+    path("reservas/<int:id_reserva>/", reserva_controller.reserva_cancelar),
 
 ]

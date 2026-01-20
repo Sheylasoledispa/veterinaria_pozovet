@@ -438,54 +438,44 @@ const StorePage = () => {
                     </div>
                   </div>
 
-                  {/* ✅ Botones según el rol - TODOS VEN EL BOTÓN DE CARRITO */}
-                  <div className="store-card-actions">
-                    {isAdmin && (
-                      <>
-                        <button
-                          type="button"
-                          className="store-card-btn"
-                          onClick={() => abrirEditarProducto(p)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="store-card-btn store-card-btn-danger"
-                          onClick={() => abrirEliminarProducto(p)}
-                        >
-                          Eliminar
-                        </button>
-                      </>
-                    )}
-
-                    {/* Botón de agregar al carrito para TODOS los roles */}
-                    <button
-                      type="button"
-                      className="store-card-btn store-card-btn-add"
-                      disabled={isAdmin || p.stock_producto === 0 || !usuario}
-                      onClick={() => {
-                        if (isAdmin) {
-                          alert('Los administradores no pueden agregar productos al carrito');
-                        } else if (!usuario) {
-                          alert('Debes iniciar sesión para agregar productos al carrito');
-                        } else if (p.stock_producto === 0) {
-                          alert('Producto agotado');
-                        } else {
-                          addToCart(p);
-                        }
-                      }}
-                    >
-                      {isAdmin 
-                        ? 'Agregar a Carrito' 
-                        : p.stock_producto === 0 
-                          ? 'Agotado' 
-                          : !usuario 
-                            ? 'Inicia sesión para comprar' 
-                            : 'Agregar al carrito'
-                      }
-                    </button>
-                  </div>
+                  {/* ✅ Botones según el rol - SOLO UN BLOQUE */}
+                  {isAdmin ? (
+                    <div className="store-card-actions">
+                      <button
+                        type="button"
+                        className="store-card-btn"
+                        onClick={() => abrirEditarProducto(p)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="store-card-btn store-card-btn-danger"
+                        onClick={() => abrirEliminarProducto(p)}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  ) : (
+                    // Botón de agregar al carrito para clientes
+                    <div className="store-card-actions">
+                      <button
+                        type="button"
+                        className="store-card-btn store-card-btn-add"
+                        disabled={p.stock_producto === 0 || !usuario}
+                        onClick={() => {
+                          if (!usuario) {
+                            alert('Debes iniciar sesión para agregar productos al carrito');
+                          } else {
+                            addToCart(p);
+                          }
+                        }}
+                      >
+                        {p.stock_producto === 0 ? 'Agotado' :
+                          !usuario ? 'Inicia sesión para comprar' : 'Agregar al carrito'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </article>
             ))}

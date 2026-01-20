@@ -375,3 +375,36 @@
     flex-direction: column;
   }
 }
+
+.cart-observaciones {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cart-observaciones label {
+  font-weight: 600;
+  color: #5b2a61;
+}
+
+.cart-observaciones textarea {
+  border-radius: 14px;
+  border: 1px solid rgba(155, 28, 143, 0.22);
+  padding: 10px 12px;
+  outline: none;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.cart-error {
+  margin-top: 10px;
+  color: #b00020;
+  font-weight: 600;
+}
+
+.cart-success {
+  margin-top: 10px;
+  color: #1b7a3a;
+  font-weight: 700;
+}

@@ -10,6 +10,7 @@ import DoctorSchedulePage from "./pages/DoctorSchedulePage"; // 👈 NUEVO
 import ConsultasAdminPage from "./pages/ConsultasAdminPage";
 import StorePage from "./pages/StorePage";
 import ProductsAdminPage from "./pages/ProductsAdminPage";
+import FacturasPage from "./pages/FacturasPage";
 
 
 const App = () => {
@@ -69,6 +70,15 @@ const App = () => {
   element={
     <ProtectedRoute>
       <StorePage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/facturas"
+  element={
+    <ProtectedRoute>
+      <FacturasPage />
     </ProtectedRoute>
   }
 />

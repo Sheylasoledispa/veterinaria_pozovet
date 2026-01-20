@@ -1,0 +1,108 @@
+.fac-root { background: #faf7fb; min-height: 100vh; }
+.fac-main { padding: 28px 18px 40px; }
+.fac-card {
+  max-width: 1180px;
+  margin: 0 auto;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(155, 28, 143, 0.14);
+  box-shadow: 0 18px 45px rgba(70, 18, 82, 0.10);
+  padding: 22px;
+}
+
+.fac-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.fac-title { font-size: 28px; margin: 0; color: #3c1644; }
+.fac-subtitle { margin: 6px 0 0; color: #6b3a71; }
+
+.fac-actions { display:flex; gap:10px; align-items:center; }
+.fac-input {
+  height: 42px;
+  min-width: 320px;
+  border-radius: 999px;
+  border: 1px solid rgba(155, 28, 143, 0.22);
+  padding: 0 14px;
+  background: rgba(255,255,255,0.75);
+  outline: none;
+}
+
+.fac-btn {
+  height: 42px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #a51b97, #d61a68);
+  font-weight: 700;
+  cursor: pointer;
+}
+.fac-btn:hover { filter: brightness(1.02); }
+
+.fac-btn-outline {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid rgba(155, 28, 143, 0.30);
+  color: #7a1a78;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fac-btn-danger {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 0, 60, 0.35);
+  background: rgba(255, 220, 230, 0.45);
+  color: #b00020;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fac-info { color: #6b3a71; margin-top: 14px; font-weight: 600; }
+.fac-error { color: #b00020; margin-top: 14px; font-weight: 800; }
+
+.fac-table-wrap { margin-top: 16px; overflow:auto; border-radius: 16px; border: 1px solid rgba(155,28,143,0.16); }
+.fac-table { width: 100%; border-collapse: collapse; min-width: 920px; }
+.fac-table th, .fac-table td { padding: 12px 12px; text-align: left; }
+.fac-table thead th { background: rgba(155,28,143,0.06); color:#3c1644; font-weight: 900; }
+.fac-table tbody tr { border-top: 1px solid rgba(155,28,143,0.10); }
+.fac-row-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.muted { color:#7a6a7d; font-size: 12px; }
+
+.badge {
+  display:inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.badge-warn { background: rgba(255, 236, 200, 0.55); color: #8a5a00; }
+.badge-ok { background: rgba(210, 245, 220, 0.55); color: #1b7a3a; }
+.badge-bad { background: rgba(255, 220, 230, 0.55); color: #b00020; }
+
+/* Modal */
+.fac-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(20, 6, 20, 0.45);
+  display:flex; align-items:center; justify-content:center;
+  padding: 18px;
+  z-index: 9999;
+}
+.fac-modal {
+  width: min(640px, 96vw);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.90);
+  border: 1px solid rgba(155,28,143,0.16);
+  box-shadow: 0 22px 55px rgba(0,0,0,0.25);
+  padding: 16px;
+}
+.fac-modal-head { display:flex; justify-content:space-between; align-items:center; }
+.fac-modal-head h3 { margin: 0; color:#3c1644; }
+.fac-modal-head .x {
+  border: none; background: transparent; font-size: 22px; cursor:pointer; color:#7a1a78;
+}
+.fac-modal-body { margin-top: 10px; color:#3c1644; }
+.fac-modal-actions { margin-top: 14px; display:flex; justify-content:flex-end; gap:10px; }

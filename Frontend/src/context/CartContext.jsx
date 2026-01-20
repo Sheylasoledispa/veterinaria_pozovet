@@ -1,182 +1,84 @@
-import { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+import { createContext, useContext, useMemo, useState } from "react";
 
-const CartContext = createContext();
-
-export const useCart = () => useContext(CartContext);
+const CartContext = createContext(null);
 
 export const CartProvider = ({ children }) => {
-  const { usuario, token } = useAuth();
-  const [cart, setCart] = useState([]);
-  const [showCartModal, setShowCartModal] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [showCart, setShowCart] = useState(false);
 
-  // Función para obtener la clave única del carrito para el usuario actual
-  const getCartKey = useCallback(() => {
-    if (!usuario || !usuario.id_usuario) return null;
-    return `cart_${usuario.id_usuario}`;
-  }, [usuario]);
+  const toggleCart = () => setShowCart((prev) => !prev);
+  const openCart = () => setShowCart(true);
+  const closeCart = () => setShowCart(false);
 
-  // Cargar carrito desde LocalStorage cuando cambia el usuario
-  useEffect(() => {
-    const cartKey = getCartKey();
-    
-    if (cartKey) {
-      // Solo cargar si hay usuario (y no es admin)
-      if (usuario?.id_rol === 1) {
-        setCart([]); // Admin no tiene carrito
-        return;
-      }
-      
-      const cartSaved = localStorage.getItem(cartKey);
-      if (cartSaved) {
-        try {
-          setCart(JSON.parse(cartSaved));
-        } catch (error) {
-          console.error('Error al cargar el carrito:', error);
-          setCart([]);
-        }
-      } else {
-        setCart([]); // Inicializar vacío si no hay carrito guardado
-      }
-    } else {
-      setCart([]); // Sin usuario = carrito vacío
-    }
-  }, [usuario, getCartKey]);
-
-  // Guardar carrito en LocalStorage cuando cambia
-  useEffect(() => {
-    const cartKey = getCartKey();
-    
-    if (cartKey && usuario && usuario.id_rol !== 1) {
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-    }
-  }, [cart, usuario, getCartKey]);
-
-  // Limpiar carrito al cambiar de usuario (efecto de limpieza)
-  useEffect(() => {
-    return () => {
-      // Este efecto se ejecuta cuando el componente se desmonta o cambia el usuario
-      setCart([]);
-    };
-  }, [usuario]);
+  const clearCart = () => setCartItems([]);
 
   const addToCart = (producto) => {
-    // Solo clientes pueden agregar al carrito
-    if (usuario?.id_rol === 1) {
-      alert('Los administradores no pueden agregar productos al carrito');
-      return;
-    }
-
-    // Validar que el usuario esté logueado
-    if (!usuario) {
-      alert('Debes iniciar sesión para agregar productos al carrito');
-      return;
-    }
-
-    // Validar stock
-    if (producto.stock_producto < 1) {
-      alert('Producto sin stock disponible');
-      return;
-    }
-
-    setCart(prev => {
-      const existe = prev.find(item => item.id_producto === producto.id_producto);
-      
-      if (existe) {
-        // Verificar que no supere el stock
-        if (existe.cantidad >= producto.stock_producto) {
-          alert('No hay más stock disponible de este producto');
-          return prev;
-        }
-        return prev.map(item =>
-          item.id_producto === producto.id_producto
-            ? { ...item, cantidad: item.cantidad + 1 }
-            : item
+    setCartItems((prev) => {
+      const found = prev.find((p) => p.id_producto === producto.id_producto);
+      if (found) {
+        return prev.map((p) =>
+          p.id_producto === producto.id_producto
+            ? { ...p, cantidad: Math.min(p.cantidad + 1, p.stock_disponible ?? 999) }
+            : p
         );
-      } else {
-        return [...prev, {
-          id_producto: producto.id_producto,
-          nombre: producto.nombre_producto,
-          precio: Number(producto.precio_producto),
-          imagen: producto.imagen_url || 'https://via.placeholder.com/150',
-          stock_disponible: producto.stock_producto,
-          cantidad: 1
-        }];
       }
+      return [
+        ...prev,
+        {
+          id_producto: producto.id_producto,
+          nombre: producto.nombre_producto || producto.nombre || "Producto",
+          precio: Number(producto.precio_producto ?? producto.precio ?? 0),
+          imagen: producto.URL_imagen || producto.imagen || "",
+          cantidad: 1,
+          stock_disponible: producto.stock_producto ?? producto.stock_disponible ?? 999,
+        },
+      ];
     });
+    openCart();
   };
 
-  const removeFromCart = (idProducto) => {
-    setCart(prev => prev.filter(item => item.id_producto !== idProducto));
+  const removeFromCart = (id_producto) => {
+    setCartItems((prev) => prev.filter((p) => p.id_producto !== id_producto));
   };
 
-  const updateQuantity = (idProducto, nuevaCantidad) => {
-    if (nuevaCantidad < 1) {
-      removeFromCart(idProducto);
-      return;
-    }
-
-    setCart(prev =>
-      prev.map(item => {
-        if (item.id_producto === idProducto) {
-          // Validar que no supere el stock
-          if (nuevaCantidad > item.stock_disponible) {
-            alert('No hay suficiente stock disponible');
-            return item;
-          }
-          return { ...item, cantidad: nuevaCantidad };
-        }
-        return item;
+  const updateQuantity = (id_producto, nuevaCantidad) => {
+    setCartItems((prev) =>
+      prev.map((p) => {
+        if (p.id_producto !== id_producto) return p;
+        const max = p.stock_disponible ?? 999;
+        const qty = Math.max(1, Math.min(Number(nuevaCantidad) || 1, max));
+        return { ...p, cantidad: qty };
       })
     );
   };
 
-  const clearCart = () => {
-    setCart([]);
-  };
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((acc, p) => acc + Number(p.precio) * Number(p.cantidad), 0);
+  }, [cartItems]);
 
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + (item.precio * item.cantidad), 0);
-  };
-
-  const totalItems = () => {
-    return cart.reduce((total, item) => total + item.cantidad, 0);
-  };
-
-  const openCartModal = () => {
-    if (usuario?.id_rol === 1) {
-      alert('Los administradores no pueden usar el carrito');
-      return;
-    }
-    
-    if (!usuario) {
-      alert('Debes iniciar sesión para usar el carrito');
-      return;
-    }
-    
-    setShowCartModal(true);
-  };
-
-  const closeCartModal = () => {
-    setShowCartModal(false);
-  };
+  const cartCount = useMemo(() => {
+    return cartItems.reduce((acc, p) => acc + Number(p.cantidad), 0);
+  }, [cartItems]);
 
   return (
     <CartContext.Provider
       value={{
-        cart,
+        cartItems,
+        showCart,
+        toggleCart,
+        openCart,
+        closeCart,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
-        calculateTotal,
-        totalItems,
-        showCartModal,
-        openCartModal,
-        closeCartModal
+        cartTotal,
+        cartCount,
       }}
     >
       {children}
     </CartContext.Provider>
   );
 };
+
+export const useCart = () => useContext(CartContext);
