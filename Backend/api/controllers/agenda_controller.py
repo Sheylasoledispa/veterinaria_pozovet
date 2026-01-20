@@ -11,12 +11,36 @@ from ..models import Agenda, Turno, Usuario
 from ..serializers import AgendaSerializer
 
 
+ROLE_ADMIN = 1
+ROLE_CLIENTE = 2
+ROLE_RECEPCIONISTA = 3
+ROLE_VETERINARIO = 4
+
+def _role_id(user):
+    """
+    Devuelve el id del rol del usuario (int).
+    Soporta FK: user.id_rol.id_rol
+    """
+    try:
+        return int(user.id_rol.id_rol)
+    except Exception:
+        return None
+
+def _can_view_agenda(user):
+    # Admin / Recepcionista / Veterinario pueden VER horarios
+    return _role_id(user) in (ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO)
+
+def _can_edit_agenda(user):
+    # Solo admin puede EDITAR/guardar
+    return _role_id(user) == ROLE_ADMIN
+
+
 # GET /agenda/horarios/doctor/<id_doctor>/?dia=YYYY-MM-DD
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def horarios_doctor_por_dia(request, id_doctor):
-    # Solo admin
-    if request.user.id_rol.id_rol != 1:
+    # Admin / Recepcionista / Veterinario pueden VER
+    if not _can_view_agenda(request.user):
         return Response({"detail": "No autorizado"}, status=403)
 
     dia_str = request.query_params.get("dia")
@@ -54,8 +78,9 @@ def horarios_doctor_por_dia(request, id_doctor):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def toggle_horario_doctor(request, id_doctor):
-    if request.user.id_rol.id_rol != 1:
+    if not _can_edit_agenda(request.user):
         return Response({"detail": "No autorizado"}, status=403)
+
 
     dia_str = request.data.get("dia")
     hora_str = request.data.get("hora")  # "08:00"
@@ -121,8 +146,9 @@ def toggle_horario_doctor(request, id_doctor):
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def guardar_horarios_doctor(request, id_doctor):
-    if request.user.id_rol.id_rol != 1:
+    if not _can_edit_agenda(request.user):
         return Response({"detail": "No autorizado"}, status=403)
+
 
     dia_str = request.data.get("dia")
     horas = request.data.get("horas", [])  # ["08:00", "09:00", ...]

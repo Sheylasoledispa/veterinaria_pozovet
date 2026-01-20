@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
 import "../styles/DoctorSchedule.css";
+
 
 // Bloques de una hora desde las 08:00 hasta las 18:00
 const HOURS = Array.from({ length: 10 }, (_, i) => {
@@ -18,6 +20,13 @@ const HOURS = Array.from({ length: 10 }, (_, i) => {
 });
 
 const DoctorSchedulePage = () => {
+
+  const { usuario } = useAuth();
+  const roleId = Number(
+    typeof usuario?.id_rol === "object" ? usuario?.id_rol?.id_rol : usuario?.id_rol
+  );
+  const canEdit = roleId === 1; // ✅ solo admin edita
+
   // Lista de doctores (trabajadores)
   const [doctores, setDoctores] = useState([]);
   const [loadingDoctores, setLoadingDoctores] = useState(false);
@@ -110,6 +119,9 @@ const esFechaPasada = Boolean(selectedDate && selectedDate < hoyStr);
 
   // 🔹 Toggle local: solo cambia el estado, NO pega al backend
   const toggleSlot = (hora) => {
+    
+    if (!canEdit) return;
+
     if (!canShowSchedule || loadingSchedule) return;
 
     if (esFechaPasada) {
@@ -185,14 +197,14 @@ const esFechaPasada = Boolean(selectedDate && selectedDate < hoyStr);
             </div>
 
            <button
-  type="button"
-  className="schedule-save-btn"
-  onClick={handleGuardarAgenda}
-  disabled={!canShowSchedule || loadingSchedule || esFechaPasada}
-  title={esFechaPasada ? "No puedes guardar en fechas pasadas" : ""}
->
-  Guardar agenda
-</button>
+              type="button"
+              className="schedule-save-btn"
+              onClick={handleGuardarAgenda}
+              disabled={!canShowSchedule || loadingSchedule || esFechaPasada || !canEdit}
+              title={esFechaPasada ? "No puedes guardar en fechas pasadas" : ""}
+            >
+              Guardar agenda
+            </button>
           </div>
 
           {/* Controles: selección de doctor y fecha */}
