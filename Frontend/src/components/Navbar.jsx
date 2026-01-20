@@ -48,8 +48,7 @@ const Navbar = () => {
      idRol === roles.RECEPCIONISTA;
 
   const canManageUsers = 
-     idRol === roles.ADMIN ||
-     idRol === roles.RECEPCIONISTA;
+     idRol === roles.ADMIN;
 
   const handleLogout = () => {
     logout();
