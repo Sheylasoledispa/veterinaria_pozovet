@@ -13,13 +13,32 @@ ROLE_CLIENTE = 2
 ROLE_RECEPCIONISTA = 3
 ROLE_VETERINARIO = 4
 
+def _role_id(user):
+    """
+    Obtiene el id del rol de forma robusta aunque:
+    - user.id_rol sea int
+    - exista user.id_rol_id
+    - user.id_rol sea objeto Rol con .id_rol
+    """
+    r = getattr(user, "id_rol", None)
+
+    if isinstance(r, int):
+        return r
+
+    rid = getattr(user, "id_rol_id", None)
+    if rid is not None:
+        return int(rid)
+
+    return getattr(r, "id_rol", None)
+
+
 # 👉 1) LISTAR TODOS LOS TURNOS CON INFO DE CLIENTE, MASCOTA Y DOCTOR
 # GET /consultas/turnos/
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def turnos_para_consulta(request):
     user = request.user
-    user_rol_id = user.id_rol.id_rol if hasattr(user, 'id_rol') and user.id_rol else None
+    user_rol_id = _role_id(user)
     
     # Permisos por rol
     if user_rol_id == ROLE_ADMIN:
@@ -98,7 +117,7 @@ def consulta_por_turno(request, id_turno):
         return Response({"detail": "Turno no encontrado"}, status=404)
 
     user = request.user
-    user_rol_id = user.id_rol.id_rol if hasattr(user, 'id_rol') and user.id_rol else None
+    user_rol_id = _role_id(user)
 
     # Verificar permisos según el rol
     if user_rol_id == ROLE_CLIENTE:
@@ -109,8 +128,11 @@ def consulta_por_turno(request, id_turno):
     
     elif user_rol_id == ROLE_VETERINARIO:
         # Veterinario: verificar que el turno sea asignado a él
-        if turno.id_agenda.id_usuario != user.id_usuario:
+        # turno.id_agenda.id_usuario -> es un objeto Usuario
+        # turno.id_agenda.id_usuario_id -> es el entero id del doctor
+        if turno.id_agenda.id_usuario_id != user.id_usuario:
             return Response({"detail": "No autorizado"}, status=403)
+
     
     elif user_rol_id not in [ROLE_ADMIN, ROLE_RECEPCIONISTA]:
         # Solo Admin, Recepcionista y Veterinario pueden acceder
@@ -125,13 +147,20 @@ def consulta_por_turno(request, id_turno):
         return Response(serializer.data, status=200)
 
     # POST y PUT: permisos para crear/actualizar consultas
-    # Solo Admin, Recepcionista y Veterinario pueden crear/actualizar consultas
-    if user_rol_id not in [ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO]:
-        return Response({"detail": "Solo personal autorizado puede crear/actualizar consultas"}, status=403)
+    # ✅ Solo Admin y Veterinario pueden crear/actualizar consultas
+    if user_rol_id not in [ROLE_ADMIN, ROLE_VETERINARIO]:
+        return Response(
+            {"detail": "Solo el administrador o el veterinario pueden crear/actualizar consultas."},
+            status=403
+        )
+
     
     # Veterinario solo puede editar sus propios turnos
-    if user_rol_id == ROLE_VETERINARIO and turno.id_agenda.id_usuario != user.id_usuario:
-        return Response({"detail": "Solo puedes editar consultas de tus propios turnos"}, status=403)
+    if user_rol_id == ROLE_VETERINARIO and turno.id_agenda.id_usuario_id != user.id_usuario:
+        return Response(
+            {"detail": "Solo puedes editar consultas de tus propios turnos"},
+            status=403
+        )
 
     # POST: crear la consulta para ese turno
     if request.method == "POST":

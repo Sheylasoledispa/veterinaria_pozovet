@@ -3,8 +3,15 @@ import api from "../api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/ConsultasAdmin.css";
+import { useAuth } from "../context/AuthContext";
 
 const ConsultasAdminPage = () => {
+
+  const { usuario } = useAuth();
+  const roleId = typeof usuario?.id_rol === "object" ? usuario?.id_rol?.id_rol : usuario?.id_rol;
+  const canEditConsulta = Number(roleId) === 1 || Number(roleId) === 4; // admin o veterinario
+
+
   const [turnos, setTurnos] = useState([]);
   const [filteredTurnos, setFilteredTurnos] = useState([]);
   const [loadingTurnos, setLoadingTurnos] = useState(false);
@@ -176,7 +183,7 @@ const ConsultasAdminPage = () => {
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 403) {
-        setConsultaError("No autorizado. Solo el administrador puede gestionar consultas.");
+      setConsultaError("No autorizado. Solo el administrador o el veterinario pueden gestionar consultas.");
       } else {
         setConsultaError("No se pudo guardar la consulta.");
       }
@@ -562,7 +569,7 @@ const ConsultasAdminPage = () => {
                   type="button"
                   className="cp-btn cp-btn-primary"
                   onClick={guardarConsulta}
-                  disabled={loadingConsulta || esCancelada}
+                  disabled={loadingConsulta || esCancelada || !canEditConsulta}
                 >
                   Guardar consulta
                 </button>
