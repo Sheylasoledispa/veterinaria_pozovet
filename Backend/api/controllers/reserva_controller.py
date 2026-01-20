@@ -2,10 +2,11 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import status
 
 from ..models import Reserva
 from ..services.reserva_service import (
-    es_admin,
+    es_gestor_reservas,
     crear_reserva_desde_carrito,
     listar_reservas_usuario,
     listar_reservas_admin,
@@ -42,10 +43,8 @@ def reservas_list_create(request):
     except ValueError as e:
         return Response({"detail": str(e)}, status=400)
 
-    # devolver detalle completo
     reserva = (
-        Reserva.objects
-        .select_related("id_usuario", "id_estado")
+        Reserva.objects.select_related("id_usuario", "id_estado")
         .prefetch_related("detalles__id_producto")
         .get(id_reserva=reserva.id_reserva)
     )
@@ -55,21 +54,17 @@ def reservas_list_create(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def reservas_admin_list(request):
-    if not es_admin(request.user):
+    # ✅ Admin o Recepcionista
+    if not es_gestor_reservas(request.user):
         return Response({"detail": "No autorizado"}, status=403)
 
     qs = listar_reservas_admin()
 
-    # filtro simple por query (?q=...)
     q = (request.query_params.get("q") or "").strip().lower()
     if q:
-        qs = qs.filter(
-            id_usuario__nombre__icontains=q
-        ) | qs.filter(
+        qs = qs.filter(id_usuario__nombre__icontains=q) | qs.filter(
             id_usuario__apellido__icontains=q
-        ) | qs.filter(
-            id_usuario__cedula__icontains=q
-        ) | qs.filter(
+        ) | qs.filter(id_usuario__cedula__icontains=q) | qs.filter(
             codigo_factura__icontains=q
         )
 
@@ -81,8 +76,7 @@ def reservas_admin_list(request):
 def reserva_cancelar(request, id_reserva):
     try:
         reserva = (
-            Reserva.objects
-            .select_related("id_usuario", "id_estado")
+            Reserva.objects.select_related("id_usuario", "id_estado")
             .prefetch_related("detalles__id_producto")
             .get(id_reserva=id_reserva)
         )
@@ -102,7 +96,8 @@ def reserva_cancelar(request, id_reserva):
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def reserva_actualizar_estado(request, id_reserva):
-    if not es_admin(request.user):
+    # ✅ Admin o Recepcionista
+    if not es_gestor_reservas(request.user):
         return Response({"detail": "No autorizado"}, status=403)
 
     try:
@@ -118,13 +113,14 @@ def reserva_actualizar_estado(request, id_reserva):
     id_estado = ser.validated_data.get("id_estado")
 
     try:
-        actualizar_estado_reserva(request.user, reserva, estado_nombre=estado_nombre, id_estado=id_estado)
+        actualizar_estado_reserva(
+            request.user, reserva, estado_nombre=estado_nombre, id_estado=id_estado
+        )
     except ValueError as e:
         return Response({"detail": str(e)}, status=400)
 
     reserva = (
-        Reserva.objects
-        .select_related("id_usuario", "id_estado")
+        Reserva.objects.select_related("id_usuario", "id_estado")
         .prefetch_related("detalles__id_producto")
         .get(id_reserva=id_reserva)
     )
@@ -136,16 +132,15 @@ def reserva_actualizar_estado(request, id_reserva):
 def reserva_factura_pdf(request, id_reserva):
     try:
         reserva = (
-            Reserva.objects
-            .select_related("id_usuario", "id_estado")
+            Reserva.objects.select_related("id_usuario", "id_estado")
             .prefetch_related("detalles__id_producto")
             .get(id_reserva=id_reserva)
         )
     except Reserva.DoesNotExist:
         return Response({"detail": "Reserva no encontrada"}, status=404)
 
-    # Permisos: admin o dueño
-    if (not es_admin(request.user)) and (reserva.id_usuario_id != request.user.id_usuario):
+    # ✅ Permisos: Admin/Recepcionista o dueño
+    if (not es_gestor_reservas(request.user)) and (reserva.id_usuario_id != request.user.id_usuario):
         return Response({"detail": "No autorizado"}, status=403)
 
     pdf_bytes = generar_factura_pdf(reserva)

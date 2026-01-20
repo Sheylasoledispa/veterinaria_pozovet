@@ -106,3 +106,73 @@
 }
 .fac-modal-body { margin-top: 10px; color:#3c1644; }
 .fac-modal-actions { margin-top: 14px; display:flex; justify-content:flex-end; gap:10px; }
+
+
+/* ============================
+   Modal bonito: Confirmar cancelación
+   ============================ */
+.fac-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.fac-confirm-modal {
+  width: min(620px, 100%);
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
+  padding: 28px 22px;
+  text-align: center;
+}
+
+.fac-confirm-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.fac-confirm-subtitle {
+  margin: 10px 0 0;
+  color: #666;
+}
+
+.fac-confirm-actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.fac-confirm-btn-ok,
+.fac-confirm-btn-cancel {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.fac-confirm-btn-ok {
+  background: #2ecc71;
+  color: #fff;
+}
+
+.fac-confirm-btn-cancel {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+.fac-confirm-btn-ok:disabled,
+.fac-confirm-btn-cancel:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
