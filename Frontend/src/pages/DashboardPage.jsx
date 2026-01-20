@@ -36,7 +36,31 @@ const DashboardPage = () => {
     id_actividad: "",
     dia: "",
   });
+const getRoleLabel = (roleId) => {
+  switch (Number(roleId)) {
+    case 1:
+      return "Administrador";
+    case 2:
+      return "Cliente";
+    case 3:
+      return "Recepcionista";
+    case 4:
+      return "Veterinario";
+    default:
+      return "Usuario";
+  }
+};
 
+// Dentro del componente, obtén el ID del rol del usuario
+const getUserRoleId = () => {
+  // Dependiendo de cómo esté estructurado tu objeto usuario
+  if (usuario?.id_rol?.id_rol) {
+    return usuario.id_rol.id_rol;
+  } else if (usuario?.id_rol) {
+    return usuario.id_rol;
+  }
+  return null;
+};
   // Modal mascotas
   const [isMascotaModalOpen, setIsMascotaModalOpen] = useState(false);
 
@@ -349,9 +373,14 @@ const DashboardPage = () => {
         <section className="dash-container">
           <header className="dash-header">
             <div>
-              <h1 className="dash-title">
-                Hola, {usuario?.nombre || "usuario"} 👋
-              </h1>
+                 <h1 className="dash-title">
+      Hola, {usuario?.nombre || "usuario"} 👋
+      {usuario && (
+        <span className="dash-role-badge">
+          ({getRoleLabel(getUserRoleId())})
+        </span>
+      )}
+    </h1>
               <p className="dash-subtitle">
                 Este es tu panel en PozoVet. Aquí puedes ver un resumen de tus
                 mascotas y tus citas.

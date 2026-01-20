@@ -41,7 +41,7 @@ urlpatterns = [
     path("usuarios/tipo/<str:tipo>/", usuarios_por_tipo),
     path("usuarios/<int:id_usuario>/cambiar-rol/", cambiar_rol),
     path("usuarios/historial/", historial_global_usuarios, name="historial-global-usuarios"),
-    path("usuarios/doctores/", usuario_controller.doctores_list),
+
 
 
     # ESTADO

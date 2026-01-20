@@ -14,6 +14,14 @@ from api.services.actividad_service import (
     obtener_doctores_por_actividad
 )
 
+
+ROLE_ADMIN = 1
+ROLE_RECEPCIONISTA = 3
+ROLE_VETERINARIO = 4
+
+# Para citas: normalmente solo debería ser Veterinario (y opcional Admin si también atiende)
+ROLES_DOCTOR_PARA_CITAS = {ROLE_VETERINARIO, ROLE_ADMIN}  # si NO quieres admin, deja solo {ROLE_VETERINARIO}
+
 @api_view(["GET", "POST"])
 def actividades_view(request):
     if request.method == "GET":
@@ -93,16 +101,45 @@ def eliminar_actividad_view(request, id_actividad):
         status=status.HTTP_200_OK
     )
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def doctores_por_actividad_view(request, id_actividad):
-    """Obtener doctores que tienen una actividad específica"""
-    try:
-        doctores = obtener_doctores_por_actividad(id_actividad)
-        return Response(doctores, status=200)
-    except Exception as e:
-        return Response(
-            {"error": f"No se pudieron obtener los doctores: {str(e)}"},
-            status=400
-        )
+    """
+    Obtener doctores que tienen una actividad específica (para agendar cita).
+    Visible para cualquier usuario logueado.
+    """
+
+    rels = (
+        DoctorActividad.objects
+        .filter(actividad_id=id_actividad)
+        .select_related("doctor", "doctor__id_rol")
+    )
+
+    seen = set()
+    data = []
+
+    for rel in rels:
+        d = rel.doctor
+        if not d:
+            continue
+
+        rid = getattr(getattr(d, "id_rol", None), "id_rol", None)
+
+        # 🔥 IMPORTANTE: aquí decides quién aparece en "Seleccionar doctor"
+        if rid not in ROLES_DOCTOR_PARA_CITAS:
+            continue
+
+        if d.id_usuario in seen:
+            continue
+        seen.add(d.id_usuario)
+
+        data.append({
+            "id_usuario": d.id_usuario,
+            "nombre": d.nombre,
+            "apellido": d.apellido,
+            "correo": d.correo,
+            "id_rol": rid,
+            "rol": getattr(d.id_rol, "descripcion_rol", None) if d.id_rol else None,
+        })
+
+    return Response(data, status=status.HTTP_200_OK)
