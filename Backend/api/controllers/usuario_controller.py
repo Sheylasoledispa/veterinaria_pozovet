@@ -161,9 +161,20 @@ def usuarios_por_tipo(request, tipo):
     clientes       -> rol 2
     trabajadores   -> rol 3 y 4
     admins         -> rol 1
+
+    Accesible para: Admin, Recepcionista, Veterinario
     """
-    if not _is_admin(request.user):
-        return Response({"detail": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+    user = request.user
+    user_rol_id = getattr(user.id_rol, "id_rol", None) if hasattr(user, "id_rol") else None
+
+    # Permitir solo a Admin, Recepcionista y Veterinario
+    allowed_roles = [ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO]
+
+    if user_rol_id not in allowed_roles:
+        return Response(
+            {"detail": "No autorizado."},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
     tipo = (tipo or "").lower().strip()
 
@@ -174,6 +185,7 @@ def usuarios_por_tipo(request, tipo):
         qs = Usuario.objects.filter(id_rol__id_rol__in=WORKER_ROLES)
 
     elif tipo in ("admins", "administradores", "admin"):
+        # ✔️ AHORA TODOS LOS ROLES PERMITIDOS PUEDEN VER ADMINS
         qs = Usuario.objects.filter(id_rol__id_rol=ROLE_ADMIN)
 
     else:
@@ -253,8 +265,16 @@ def doctores_list(request):
     - Admin (1)
     - Recepcionista (3)
     - Veterinario (4)
-    (y accesible para cualquier usuario logueado)
+    Accesible solo para estos roles
     """
+    user = request.user
+    user_rol_id = getattr(user.id_rol, 'id_rol', None) if hasattr(user, 'id_rol') else None
+    
+    # Permitir solo a Admin, Recepcionista y Veterinario
+    allowed_roles = [ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO]
+    
+    if user_rol_id not in allowed_roles:
+        return Response({"detail": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
     personal = Usuario.objects.filter(
         id_rol__id_rol__in=[ROLE_ADMIN, ROLE_RECEPCIONISTA, ROLE_VETERINARIO]
@@ -286,3 +306,5 @@ def usuarios_doctores(request):
         "id_usuario", "nombre", "apellido", "correo"
     )
     return Response(list(doctores), status=status.HTTP_200_OK)
+
+
