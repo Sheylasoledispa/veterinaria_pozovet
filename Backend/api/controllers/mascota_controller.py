@@ -85,7 +85,14 @@ def mascotas_detail(request, pk: int):
     if request.method == "DELETE":
         mascota_service.eliminar_mascota(mascota)
 
-        # (Opcional) Si algún día quieres historial de eliminaciones, aquí.
+        # ✅ HISTORIAL: registrar eliminación de mascota
+        HistorialUsuario.objects.create(
+            usuario=mascota.id_usuario,  # dueño real
+            realizado_por=request.user,
+            tipo="mascota_eliminada",
+            detalle=f"Se eliminó la mascota '{mascota.nombre_mascota}'."
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
