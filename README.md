@@ -141,3 +141,20 @@ Estos comandos permiten:
 - migrate
 Aplica las migraciones internas de Django (auth, sesiones, etc.).
 Confirma que la conexión con PostgreSQL está bien configurada.
+
+#INSTRUCCIONES PARA EL LEVANTAMIENTO DEL ENTORNO CON DOCKER
+Para levantar el docker, en la terminal ejecutar el siguiente comando: "docker compose up --build"
+La primera vez tardará un poco porque:
+- Descarga la imagen de Postgres
+- Descarga la imagen de Python
+- Instala tus requirements
+- Instala las dependencias de npm
+
+Cuando termine deberías ver los logs de:
+- Postgres levantando
+
+Django migrando y luego diciendo:
+- Starting development server at http://0.0.0.0:8000/
+
+vite diciendo:
+- Local: http://localhost:5173/
