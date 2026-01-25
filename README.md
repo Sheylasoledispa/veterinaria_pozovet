@@ -158,3 +158,22 @@ Django migrando y luego diciendo:
 
 vite diciendo:
 - Local: http://localhost:5173/
+
+
+#¿Dónde está desplegado el sistema?
+  El sistema se encuentra desplegado utilizando una arquitectura distribuida, combinando servicios en la nube y un servidor dedicado para el backend.
+  Link de la pagina web desplegada: https://veterinaria-pozovet.vercel.app/
+
+
+#¿Qué parte está en el servidor y cuál en la nube?
+  El frontend del sistema está desplegado en la nube, específicamente en la plataforma Vercel.
+  Link de Hosting Frontend (Nube): https://vercel.com/
+
+  El backend del sistema está desplegado en un servidor virtual (Droplet) de DigitalOcean, utilizando Ubuntu Server como sistema operativo.
+  Link de Hosting Backend (Servidor): https://www.digitalocean.com/
+
+#Puntos a tener en cuenta:
+  -La base de datos PostgreSQL se encuentra instalada y configurada en el mismo servidor donde se ejecuta el backend.
+  -La comunicación entre el frontend y el backend se realiza mediante peticiones HTTPS utilizando una API REST y el formato JSON 
+
+   
