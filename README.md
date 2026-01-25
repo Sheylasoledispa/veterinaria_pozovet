@@ -1,3 +1,12 @@
+# Descripcion del Proyecto 
+El proyecto Pozovet consiste en el desarrollo de un sistema web integral para la gestión administrativa y operativa de una clínica veterinaria. La plataforma fue diseñada con el objetivo de digitalizar y optimizar los procesos internos que anteriormente se realizaban de manera tradicional, como la gestión de clientes, mascotas, personal, citas veterinarias y venta de productos.
+Antes de la implementación del sistema, la veterinaria no contaba con una herramienta tecnológica que permitiera organizar sus operaciones de forma eficiente. Los turnos se asignaban por llamadas telefónicas, no existía una agenda estructurada para el personal, ni un control centralizado de las citas, lo que generaba desorden, pérdida de información y dificultad en la atención al cliente.
+A través del sistema web desarrollado, el administrador del negocio puede gestionar usuarios con distintos roles (administrador, veterinario, recepcionista y cliente), asignar horarios laborales, administrar citas médicas, controlar el registro de mascotas y manejar una tienda virtual de productos veterinarios. Asimismo, los clientes pueden registrar sus mascotas, agendar citas de manera autónoma y acceder a los servicios disponibles desde cualquier dispositivo con conexión a internet.
+
+# Tecnologias utilizadas 
+El sistema fue construido bajo una arquitectura cliente-servidor, utilizando tecnologías modernas como React para el frontend y Django REST Framework para el backend, garantizando seguridad, escalabilidad y facilidad de mantenimiento. De esta manera, Pozovet representa una solución tecnológica eficiente que mejora la organización interna de la veterinaria, optimiza el tiempo del personal y eleva la calidad del servicio ofrecido a los clientes.
+
+
 # Backend – Veterinaria PozoVet (Django)
 
 Este es el **backend** del sistema **Veterinaria PozoVet**, desarrollado con **Django** y **Django REST Framework**.  
@@ -51,7 +60,7 @@ manage.py                   # Script principal para comandos Django
 requirements.txt            # Dependencias
 
 
-Capas principales
+#Capas principales
 
 Models (models.py)
 Definen la estructura de los datos. Ejemplos:
@@ -95,7 +104,7 @@ pip (gestor de paquetes de Python)
 Motor de base de datos (por defecto puede ser SQLite; si usas PostgreSQL u otro, configúralo en settings.py)
 
 
-PASOS DE INSTALACIÓN 
+# PASOS DE INSTALACIÓN 
 CLONAR EL REPOSITORIO
 
 Crear y activar entorno virtual
@@ -142,7 +151,8 @@ Estos comandos permiten:
 Aplica las migraciones internas de Django (auth, sesiones, etc.).
 Confirma que la conexión con PostgreSQL está bien configurada.
 
-#INSTRUCCIONES PARA EL LEVANTAMIENTO DEL ENTORNO CON DOCKER
+
+# INSTRUCCIONES PARA EL LEVANTAMIENTO DEL ENTORNO CON DOCKER
 Para levantar el docker, en la terminal ejecutar el siguiente comando: "docker compose up --build"
 La primera vez tardará un poco porque:
 - Descarga la imagen de Postgres
@@ -175,5 +185,9 @@ vite diciendo:
 #Puntos a tener en cuenta:
   -La base de datos PostgreSQL se encuentra instalada y configurada en el mismo servidor donde se ejecuta el backend.
   -La comunicación entre el frontend y el backend se realiza mediante peticiones HTTPS utilizando una API REST y el formato JSON 
+
+
+# URL del sistema en producción.
+  https://veterinaria-pozovet.vercel.app/
 
    
