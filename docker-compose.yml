@@ -42,8 +42,8 @@ services:
 
           pg_dump -h db -U postgres -d pozovet_db --clean --if-exists | psql -h db_replica -U postgres -d pozovet_db;
 
-          echo '--- Replica actualizada. Esperando 60s... ---';
-          sleep 60;
+          echo '--- Replica actualizada. Esperando 1 hora... ---';
+          sleep 3600;
         done
       "
 
